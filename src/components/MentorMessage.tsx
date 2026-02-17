@@ -5,6 +5,7 @@ import { pl } from 'date-fns/locale'
 import { marked } from 'marked'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { getPersonalizationConfig } from '@/lib/storage'
 
 interface MentorMessageProps {
   message: Message
@@ -41,7 +42,13 @@ function extractOptions(content: string): ParsedOption[] {
 export function MentorMessage({ message, onOptionClick }: MentorMessageProps) {
   const [htmlContent, setHtmlContent] = useState('')
   const [options, setOptions] = useState<ParsedOption[]>([])
+  const [mentorName, setMentorName] = useState('Profesor')
   const isUser = message.role === 'user'
+
+  useEffect(() => {
+    const config = getPersonalizationConfig()
+    setMentorName(config.mentorName)
+  }, [])
 
   useEffect(() => {
     const parseMarkdown = async () => {
@@ -73,7 +80,7 @@ export function MentorMessage({ message, onOptionClick }: MentorMessageProps) {
         {!isUser && (
           <div className="flex items-center gap-2 px-1">
             <span className="text-lg">👨‍🏫</span>
-            <span className="text-xs font-medium text-muted-foreground">Profesor</span>
+            <span className="text-xs font-medium text-muted-foreground">{mentorName}</span>
           </div>
         )}
         

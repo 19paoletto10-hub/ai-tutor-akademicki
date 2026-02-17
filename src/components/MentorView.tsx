@@ -7,7 +7,7 @@ import { PaperPlaneTilt } from '@phosphor-icons/react'
 import { MentorMessage } from '@/components/MentorMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { MentorSidebar } from '@/components/MentorSidebar'
-import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext } from '@/lib/storage'
+import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig } from '@/lib/storage'
 
 export interface Message {
   id: string
@@ -16,7 +16,7 @@ export interface Message {
   timestamp: number
 }
 
-const SYSTEM_PROMPT = `Jesteś profesorem akademickim — autorytetem w dziedzinie omawianego kursu.
+const DEFAULT_SYSTEM_PROMPT = `Jesteś profesorem akademickim — autorytetem w dziedzinie omawianego kursu.
 Prowadzisz studenta SEKWENCYJNIE przez terminologię i pojęcia kursu.
 
 ZASADY SEKWENCYJNEGO NAUCZANIA:
@@ -47,6 +47,11 @@ WAŻNE:
 - Gdy student wybiera [A] — PRZEJDŹ do następnego tematu natychmiast
 - Gdy student wybiera [B] — POGŁĘB aktualny temat (więcej przykładów, szczegółów)
   Po rozwinięciu ([B]) podaj TYLKO opcję [A] (BEZ [B]) — nie oferuj ponownego rozwinięcia!`
+
+function getSystemPrompt(): string {
+  const customPrompt = getCustomMentorPrompt()
+  return customPrompt || DEFAULT_SYSTEM_PROMPT
+}
 
 const WELCOME_MESSAGE: Message = {
   id: 'welcome',
@@ -109,7 +114,7 @@ export function MentorView() {
         .map((msg) => `${msg.role === 'user' ? 'Student' : 'Profesor'}: ${msg.content}`)
         .join('\n\n')
 
-      const promptText = `${injectCourseContext(SYSTEM_PROMPT)}
+      const promptText = `${injectCourseContext(getSystemPrompt())}
 
 Historia rozmowy:
 ${conversationHistory}

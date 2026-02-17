@@ -8,7 +8,7 @@ import { ChatMessage } from '@/components/ChatMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { TutorSidebar } from '@/components/TutorSidebar'
 import { useStudentProfile } from '@/hooks/use-student-profile'
-import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext } from '@/lib/storage'
+import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction } from '@/lib/storage'
 
 export interface Message {
   id: string
@@ -17,7 +17,7 @@ export interface Message {
   timestamp: number
 }
 
-const SYSTEM_PROMPT = `Jesteś profesjonalnym tutorem akademickim. Twoim zadaniem jest AKTYWNIE uczyć i prowadzić studenta krok po kroku przez materiał kursowy.
+const DEFAULT_SYSTEM_PROMPT = `Jesteś profesjonalnym tutorem akademickim. Twoim zadaniem jest AKTYWNIE uczyć i prowadzić studenta krok po kroku przez materiał kursowy.
 
 TRYB AKTYWNEGO PROWADZENIA:
 Gdy student wybiera temat lub zadaje pytanie, TY przejmij inicjatywę:
@@ -41,6 +41,13 @@ FORMAT ODPOWIEDZI:
 [Jeśli znasz źródła, podaj je. Jeśli nie — napisz "Odpowiedź na podstawie wiedzy ogólnej."]
 
 Jeśli nie znasz odpowiedzi — powiedz wprost, nie wymyślaj.`
+
+function getSystemPrompt(): string {
+  const customPrompt = getCustomTutorPrompt()
+  const personalization = getPersonalizationConfig()
+  const basePrompt = customPrompt || DEFAULT_SYSTEM_PROMPT
+  return injectLanguageInstruction(basePrompt, personalization.tutorLanguage)
+}
 
 const WELCOME_MESSAGE: Message = {
   id: 'welcome',
@@ -113,7 +120,7 @@ ${textToSend}`
         .map((msg) => `${msg.role === 'user' ? 'Student' : 'Tutor'}: ${msg.content}`)
         .join('\n\n')
 
-      const promptText = `${injectCourseContext(SYSTEM_PROMPT)}
+      const promptText = `${injectCourseContext(getSystemPrompt())}
 
 Historia rozmowy:
 ${conversationHistory}

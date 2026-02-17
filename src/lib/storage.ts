@@ -58,6 +58,12 @@ export interface CourseConfig {
   courseDescription: string
 }
 
+export interface PersonalizationConfig {
+  mentorName: string
+  tutorLanguage: 'Polski' | 'English'
+  darkMode: boolean
+}
+
 export function getCourseConfig(): CourseConfig | null {
   try {
     const stored = localStorage.getItem('course_config')
@@ -71,6 +77,49 @@ export function getCourseConfig(): CourseConfig | null {
     console.error('Error loading course config:', error)
   }
   return null
+}
+
+export function getPersonalizationConfig(): PersonalizationConfig {
+  try {
+    const stored = localStorage.getItem('personalization_config')
+    if (stored) {
+      return JSON.parse(stored) as PersonalizationConfig
+    }
+  } catch (error) {
+    console.error('Error loading personalization config:', error)
+  }
+  return {
+    mentorName: 'Profesor',
+    tutorLanguage: 'Polski',
+    darkMode: true
+  }
+}
+
+export function getCustomTutorPrompt(): string | null {
+  try {
+    return localStorage.getItem('custom_tutor_prompt')
+  } catch (error) {
+    console.error('Error loading custom tutor prompt:', error)
+    return null
+  }
+}
+
+export function getCustomMentorPrompt(): string | null {
+  try {
+    return localStorage.getItem('custom_mentor_prompt')
+  } catch (error) {
+    console.error('Error loading custom mentor prompt:', error)
+    return null
+  }
+}
+
+export function getCurriculumTopics(): string | null {
+  try {
+    return localStorage.getItem('curriculum_topics')
+  } catch (error) {
+    console.error('Error loading curriculum topics:', error)
+    return null
+  }
 }
 
 export function injectCourseContext(systemPrompt: string): string {
@@ -91,4 +140,11 @@ Odpowiadaj WYŁĄCZNIE w kontekście tego kursu. Jeśli pytanie wykracza poza za
 `
   
   return courseContext + systemPrompt
+}
+
+export function injectLanguageInstruction(systemPrompt: string, language: 'Polski' | 'English'): string {
+  if (language === 'English') {
+    return systemPrompt.replace(/Odpowiadaj po polsku\./g, 'Odpowiadaj po angielsku.')
+  }
+  return systemPrompt
 }
