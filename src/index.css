@@ -1,1 +1,107 @@
-/* This is where custom CSS goes */
+@import 'tailwindcss';
+@import "tw-animate-css";
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  code, pre {
+    font-family: 'Fira Code', 'Courier New', monospace;
+  }
+}
+
+:root {
+  --background: oklch(0.12 0.02 250);
+  --foreground: oklch(0.98 0 0);
+  
+  --card: oklch(0.15 0.02 250 / 0.4);
+  --card-foreground: oklch(0.98 0 0);
+  
+  --popover: oklch(0.15 0.02 250);
+  --popover-foreground: oklch(0.98 0 0);
+  
+  --primary: oklch(0.555 0.183 272.314);
+  --primary-foreground: oklch(0.98 0 0);
+  
+  --secondary: oklch(0.639 0.252 328.363);
+  --secondary-foreground: oklch(0.98 0 0);
+  
+  --accent: oklch(0.811 0.124 195.815);
+  --accent-foreground: oklch(0.12 0.02 250);
+  
+  --muted: oklch(0.25 0.02 250);
+  --muted-foreground: oklch(0.65 0.01 250);
+  
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0 0);
+  
+  --border: oklch(0.98 0 0 / 0.1);
+  --input: oklch(0.98 0 0 / 0.1);
+  --ring: oklch(0.811 0.124 195.815);
+  
+  --radius: 0.75rem;
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --radius-xl: calc(var(--radius) * 2);
+  --radius-2xl: calc(var(--radius) * 3);
+  --radius-full: 9999px;
+}
+
+.gradient-bg {
+  background: linear-gradient(to bottom, oklch(0.12 0.02 250), oklch(0.18 0.02 250), oklch(0.12 0.02 250));
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, oklch(0.555 0.183 272.314), oklch(0.639 0.252 328.363));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, oklch(0.555 0.183 272.314), oklch(0.639 0.252 328.363), oklch(0.811 0.124 195.815));
+  border-radius: 2px;
+}
