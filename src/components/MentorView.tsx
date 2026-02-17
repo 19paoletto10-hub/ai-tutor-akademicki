@@ -7,7 +7,7 @@ import { PaperPlaneTilt } from '@phosphor-icons/react'
 import { MentorMessage } from '@/components/MentorMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { MentorSidebar } from '@/components/MentorSidebar'
-import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet } from '@/lib/storage'
+import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext } from '@/lib/storage'
 
 export interface Message {
   id: string
@@ -109,7 +109,7 @@ export function MentorView() {
         .map((msg) => `${msg.role === 'user' ? 'Student' : 'Profesor'}: ${msg.content}`)
         .join('\n\n')
 
-      const promptText = `${SYSTEM_PROMPT}
+      const promptText = `${injectCourseContext(SYSTEM_PROMPT)}
 
 Historia rozmowy:
 ${conversationHistory}

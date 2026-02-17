@@ -4,6 +4,7 @@ import { Navigation, ViewType } from '@/components/Navigation'
 import { ViewWrapper, PlaceholderView } from '@/components/ViewWrapper'
 import { TutorView } from '@/components/TutorView'
 import { MentorView } from '@/components/MentorView'
+import { SettingsView } from '@/components/SettingsView'
 import { Toaster } from '@/components/ui/sonner'
 
 const viewContent = {
@@ -11,11 +12,6 @@ const viewContent = {
     title: 'Egzamin',
     description: 'Sprawdź swoją wiedzę — 20 pytań, 60 minut',
     emoji: '📝',
-  },
-  settings: {
-    title: 'Ustawienia',
-    description: 'Konfiguracja tematu kursu i promptów',
-    emoji: '⚙️',
   },
 }
 
@@ -35,6 +31,10 @@ function App() {
           ) : activeView === 'mentor' ? (
             <ViewWrapper key="mentor" viewId="mentor">
               <MentorView />
+            </ViewWrapper>
+          ) : activeView === 'settings' ? (
+            <ViewWrapper key="settings" viewId="settings">
+              <SettingsView />
             </ViewWrapper>
           ) : (
             <ViewWrapper key={activeView} viewId={activeView}>

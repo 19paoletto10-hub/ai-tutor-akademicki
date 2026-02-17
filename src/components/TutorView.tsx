@@ -8,7 +8,7 @@ import { ChatMessage } from '@/components/ChatMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { TutorSidebar } from '@/components/TutorSidebar'
 import { useStudentProfile } from '@/hooks/use-student-profile'
-import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet } from '@/lib/storage'
+import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext } from '@/lib/storage'
 
 export interface Message {
   id: string
@@ -113,7 +113,7 @@ ${textToSend}`
         .map((msg) => `${msg.role === 'user' ? 'Student' : 'Tutor'}: ${msg.content}`)
         .join('\n\n')
 
-      const promptText = `${SYSTEM_PROMPT}
+      const promptText = `${injectCourseContext(SYSTEM_PROMPT)}
 
 Historia rozmowy:
 ${conversationHistory}

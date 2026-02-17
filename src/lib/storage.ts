@@ -52,3 +52,43 @@ export function safeStorageGet<T>(key: string, defaultValue: T): T {
   }
   return defaultValue
 }
+
+export interface CourseConfig {
+  courseName: string
+  courseDescription: string
+}
+
+export function getCourseConfig(): CourseConfig | null {
+  try {
+    const stored = localStorage.getItem('course_config')
+    if (stored) {
+      const config = JSON.parse(stored) as CourseConfig
+      if (config.courseName?.trim() && config.courseDescription?.trim()) {
+        return config
+      }
+    }
+  } catch (error) {
+    console.error('Error loading course config:', error)
+  }
+  return null
+}
+
+export function injectCourseContext(systemPrompt: string): string {
+  const config = getCourseConfig()
+  
+  if (!config) {
+    return systemPrompt
+  }
+  
+  const courseContext = `KURS: ${config.courseName}
+ZAKRES KURSU I KLUCZOWE TEMATY:
+${config.courseDescription}
+
+Odpowiadaj WYŁĄCZNIE w kontekście tego kursu. Jeśli pytanie wykracza poza zakres — poinformuj grzecznie studenta.
+
+---
+
+`
+  
+  return courseContext + systemPrompt
+}

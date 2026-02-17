@@ -68,6 +68,13 @@ This is a multi-view educational application with view switching, configuration 
 - **Progression**: User clicks export button → Markdown file is generated with header, formatted messages, and separators → Browser download initiated → File saved with timestamp
 - **Success criteria**: Markdown file includes header "# Rozmowa z AI Tutorem — {date}", each message formatted as "## Student" or "## Tutor" with content and --- separators, filename includes date in ISO format, button disabled when no messages exist
 
+### Course Configuration Settings
+- **Functionality**: Settings view allowing configuration of course name and description (up to 6000 characters) that gets injected into AI system prompts
+- **Purpose**: Focus AI responses exclusively on the configured course material and prevent off-topic answers
+- **Trigger**: User navigates to Settings view via navigation, enters course info, clicks save button
+- **Progression**: User opens Settings → Fills course name input → Fills course description textarea (max 6000 chars with counter) → Clicks "💾 Zapisz" button → Config saved to localStorage (key: 'course_config') → Success toast shown → Course context automatically prepended to all Tutor and Mentor system prompts
+- **Success criteria**: Course config persists in localStorage, character counter shows current/max values and turns red at 90%, course context injected as preamble to both Tutor and Mentor system prompts with format "KURS: {name}\nZAKRES KURSU: {description}\n\nOdpowiadaj WYŁĄCZNIE w kontekście tego kursu...", toast confirmation appears on save, Settings view loads previously saved config on mount
+
 ### Student Profile with Adaptive Level System
 - **Functionality**: Persistent student profile tracking learning level (1-5), weak topics (max 10), recent mistakes (max 5), and quiz history (max 10 grades 2-5)
 - **Purpose**: Enable AI to adapt explanation complexity and focus to student's demonstrated knowledge level
@@ -94,6 +101,8 @@ This is a multi-view educational application with view switching, configuration 
 - **Empty Conversation Export**: Disable export button when no messages exist in conversation
 - **Level Boundaries**: Level clamped between 1-5, cannot go below or above these limits regardless of quiz performance
 - **Insufficient Quiz Data**: Level adjustment only triggers after 3+ quizzes completed to ensure reliable average
+- **Missing Course Config**: If no course configuration is saved, AI prompts use base system prompt without course context injection - app functions normally
+- **Course Config Character Limit**: Textarea enforces 6000 character maximum, preventing further input when limit reached
 
 ## Design Direction
 
