@@ -19,6 +19,13 @@ const ACADEMIC_KEYWORDS = [
   'metoda', 'analiza', 'dlaczego', 'jak działa', 'co to jest'
 ]
 
+const VAGUE_PATTERNS = [
+  /^(dalej|kontynuuj|więcej|next)\.?$/i,
+  /^(nie\s+rozumiem|nie\s+wiem|help|pomóż)\.?$/i,
+  /^\?+$/,
+  /^(co\s+to|hm+)\??$/i,
+]
+
 export interface ValidationResult {
   allowed: boolean
   blockReason?: 'anti-cheating' | 'off-topic'
@@ -149,6 +156,39 @@ Wpisz pytanie związane z nauką, a chętnie pomogę!`
     console.error('Error checking topic relevance:', error)
     return { allowed: true }
   }
+}
+
+export function isVagueMessage(message: string, hasConversationHistory: boolean): boolean {
+  if (hasConversationHistory) {
+    return false
+  }
+  
+  const trimmed = message.trim()
+  for (const pattern of VAGUE_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      return true
+    }
+  }
+  
+  return false
+}
+
+export function augmentContextualMessage(message: string, lastAIMessage: string | null): string {
+  const trimmed = message.trim()
+  
+  if (!lastAIMessage || trimmed.length >= 30) {
+    return message
+  }
+  
+  const isContextualShort = /^[a-z0-9]$/i.test(trimmed) || 
+                            ['a', 'b', 'c', 'd', '1', '2', '3', '4', 'tak', 'nie', 'kontynuuj', 'dalej'].includes(trimmed.toLowerCase())
+  
+  if (isContextualShort) {
+    const contextSnippet = lastAIMessage.slice(0, 200)
+    return `[Kontekst: ostatnia odpowiedź dotyczyła: ${contextSnippet}]\nOdpowiedź studenta: ${message}`
+  }
+  
+  return message
 }
 
 export async function validateMessage(message: string): Promise<ValidationResult> {

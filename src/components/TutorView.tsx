@@ -10,8 +10,9 @@ import { TutorSidebar } from '@/components/TutorSidebar'
 import { useStudentProfile } from '@/hooks/use-student-profile'
 import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction } from '@/lib/storage'
 import { QuizEvaluation } from '@/components/QuizEvaluationCard'
-import { validateMessage } from '@/lib/validators'
+import { validateMessage, isVagueMessage, augmentContextualMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
+import { Card as UICard } from '@/components/ui/card'
 
 export interface Message {
   id: string
@@ -27,6 +28,17 @@ export interface Message {
 }
 
 const DEFAULT_SYSTEM_PROMPT = `Jesteś profesjonalnym tutorem akademickim. Twoim zadaniem jest AKTYWNIE uczyć i prowadzić studenta krok po kroku przez materiał kursowy.
+
+WAŻNA ZASADA — GATING PEWNOŚCI:
+Jeśli pytanie studenta jest NIEJASNE lub ZBYT OGÓLNE (np. "dalej", "?", "nie rozumiem", pojedyncza litera/cyfra bez kontekstu), zamiast odpowiadać na siłę, ZAPYTAJ o doprecyzowanie:
+- "O który aspekt tematu pytasz dokładniej?"
+- "Czy chcesz, żebym wyjaśnił [konkretne pojęcie] czy [inne pojęcie]?"
+- "Powiedz mi więcej — co dokładnie sprawia trudność?"
+
+Nie zgaduj — lepsza jest diagnoza niż błędna odpowiedź.
+
+KRÓTKIE ODPOWIEDZI KONTEKSTOWE:
+Jeśli student pisze krótką odpowiedź jak "A", "1", "tak", "kontynuuj" — odnieś ją do OSTATNIEGO tematu z rozmowy. Nie pytaj "o czym mowa?" — wiesz z kontekstu rozmowy.
 
 TRYB AKTYWNEGO PROWADZENIA:
 Gdy student wybiera temat lub zadaje pytanie, TY przejmij inicjatywę:
@@ -179,6 +191,25 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
     const textToSend = messageText || input.trim()
     if (!textToSend || isGenerating) return
 
+    const hasHistory = messages.length > 1
+    
+    if (isVagueMessage(textToSend, hasHistory)) {
+      setInput('')
+      const suggestionMessage: Message = {
+        id: `vague-help-${Date.now()}`,
+        role: 'assistant',
+        content: 'Wygląda na to, że dopiero zaczynasz! 😊 Spróbuj jedno z tych:',
+        timestamp: Date.now(),
+      }
+      setMessages((current) => [...current, suggestionMessage])
+      return
+    }
+
+    const previousMessage = messages.length > 0 ? messages[messages.length - 1] : undefined
+    const lastAIMessage = previousMessage?.role === 'assistant' ? previousMessage.content : null
+    
+    const augmentedMessage = augmentContextualMessage(textToSend, lastAIMessage)
+
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -186,7 +217,6 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
       timestamp: Date.now(),
     }
 
-    const previousMessage = messages.length > 0 ? messages[messages.length - 1] : undefined
     const isAnswerToQuiz = isQuizAnswer(textToSend, previousMessage)
 
     setMessages((current) => [...current, userMessage])

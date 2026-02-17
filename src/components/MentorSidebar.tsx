@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { Trash, DownloadSimple } from '@phosphor-icons/react'
+import { Trash, DownloadSimple, Target } from '@phosphor-icons/react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -106,6 +106,21 @@ export function MentorSidebar({ onSendPrompt, onClearChat, messages, discussedTo
                 Omówione tematy pojawią się tutaj
               </p>
             )}
+          </div>
+
+          <Separator className="bg-border/50" />
+
+          <div>
+            <h4 className="text-sm font-medium mb-2">🎯 Sprawdź wiedzę</h4>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full bg-emerald-900/20 border-emerald-500/30 hover:bg-emerald-800/30"
+              onClick={() => onSendPrompt('[ACTION] Wygeneruj pytanie quiz o aktualnym temacie.')}
+            >
+              <Target size={16} className="mr-2" />
+              Mini Quiz
+            </Button>
           </div>
 
           <Separator className="bg-border/50" />
