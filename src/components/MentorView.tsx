@@ -10,6 +10,7 @@ import { MentorMessage } from '@/components/MentorMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { MentorSidebar } from '@/components/MentorSidebar'
 import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig, getCurriculumTopics, injectKnowledgeBase } from '@/lib/storage'
+import { useUploadedMaterials, getKnowledgeBaseSummary } from '@/hooks/use-uploaded-materials'
 import { validateMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
 import {
@@ -83,6 +84,7 @@ const STORAGE_KEY = 'mentor_chat_history'
 const MAX_MESSAGES = 50
 
 export function MentorView() {
+  const { materials } = useUploadedMaterials()
   const [messages, setMessages] = useState<Message[]>(() => {
     const stored = safeStorageGet<Message[]>(STORAGE_KEY, [])
     if (stored.length > 0) {
@@ -351,6 +353,12 @@ Odpowiedz na ostatnie pytanie studenta w sposób akademicki i sekwencyjny. Użyj
           </div>
 
           <div className="border-t border-border/50 p-4 md:p-6 bg-muted/20">
+            {getKnowledgeBaseSummary(materials) && (
+              <div className="mb-3 text-sm text-emerald-400 flex items-center gap-2">
+                <span>📚</span>
+                <span>{getKnowledgeBaseSummary(materials)}</span>
+              </div>
+            )}
             <div className="flex gap-3">
               <Textarea
                 ref={textareaRef}

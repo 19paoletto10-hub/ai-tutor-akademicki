@@ -9,6 +9,7 @@ import { TypingIndicator } from '@/components/TypingIndicator'
 import { TutorSidebar } from '@/components/TutorSidebar'
 import { useStudentProfile } from '@/hooks/use-student-profile'
 import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction, injectKnowledgeBase } from '@/lib/storage'
+import { useUploadedMaterials, getKnowledgeBaseSummary } from '@/hooks/use-uploaded-materials'
 import { QuizEvaluation } from '@/components/QuizEvaluationCard'
 import { validateMessage, isVagueMessage, augmentContextualMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
@@ -83,6 +84,7 @@ const MAX_MESSAGES = 50
 
 export function TutorView() {
   const { profile, getQuizAverage, addQuizGrade, addWeakTopic } = useStudentProfile()
+  const { materials } = useUploadedMaterials()
   const [messages, setMessages] = useState<Message[]>(() => {
     const stored = safeStorageGet<Message[]>(STORAGE_KEY, [])
     if (stored.length > 0) {
@@ -407,6 +409,12 @@ Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj 
           </div>
 
           <div className="border-t border-border/50 p-4 md:p-6 bg-muted/20">
+            {getKnowledgeBaseSummary(materials) && (
+              <div className="mb-3 text-sm text-emerald-400 flex items-center gap-2">
+                <span>📚</span>
+                <span>{getKnowledgeBaseSummary(materials)}</span>
+              </div>
+            )}
             <div className="flex gap-3">
               <Textarea
                 ref={textareaRef}
