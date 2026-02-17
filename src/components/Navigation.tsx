@@ -1,6 +1,13 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { Keyboard } from '@phosphor-icons/react'
 
 export type ViewType = 'tutor' | 'mentor' | 'exam' | 'settings'
 
@@ -93,6 +100,52 @@ export function Navigation({ activeView, onViewChange }: NavigationProps) {
                 )}
               </button>
             ))}
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-2 text-muted-foreground hover:text-foreground"
+                    aria-label="Skróty klawiszowe"
+                  >
+                    <Keyboard className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <div className="space-y-2 text-sm">
+                    <p className="font-semibold mb-3">⌨️ Skróty klawiszowe</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Enter</span>
+                        <span>Wyślij wiadomość</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Shift+Enter</span>
+                        <span>Nowa linia</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Ctrl+E</span>
+                        <span>Eksportuj rozmowę</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Ctrl+D</span>
+                        <span>Wyczyść rozmowę</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">1/2/3/4</span>
+                        <span>Przełącz widoki</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Escape</span>
+                        <span>Zamknij modalne</span>
+                      </div>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </nav>
         </div>
       </div>

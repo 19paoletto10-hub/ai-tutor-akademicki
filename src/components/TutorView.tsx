@@ -12,7 +12,7 @@ import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, i
 import { QuizEvaluation } from '@/components/QuizEvaluationCard'
 import { validateMessage, isVagueMessage, augmentContextualMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
-import { Card as UICard } from '@/components/ui/card'
+import { VagueSuggestionCard } from '@/components/VagueSuggestionCard'
 
 export interface Message {
   id: string
@@ -25,6 +25,7 @@ export interface Message {
     type: 'anti-cheating' | 'off-topic'
     message: string
   }
+  isVagueSuggestion?: boolean
 }
 
 const DEFAULT_SYSTEM_PROMPT = `Jesteś profesjonalnym tutorem akademickim. Twoim zadaniem jest AKTYWNIE uczyć i prowadzić studenta krok po kroku przez materiał kursowy.
@@ -198,8 +199,9 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
       const suggestionMessage: Message = {
         id: `vague-help-${Date.now()}`,
         role: 'assistant',
-        content: 'Wygląda na to, że dopiero zaczynasz! 😊 Spróbuj jedno z tych:',
+        content: 'Wygląda na to, że dopiero zaczynasz! 😊',
         timestamp: Date.now(),
+        isVagueSuggestion: true,
       }
       setMessages((current) => [...current, suggestionMessage])
       return
@@ -370,6 +372,15 @@ Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj 
                           key={message.id}
                           type={message.validationBlock.type}
                           message={message.validationBlock.message}
+                        />
+                      )
+                    }
+                    
+                    if (message.isVagueSuggestion) {
+                      return (
+                        <VagueSuggestionCard
+                          key={message.id}
+                          onSuggestionClick={(text) => handleSend(text)}
                         />
                       )
                     }
