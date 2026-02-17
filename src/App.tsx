@@ -1,19 +1,12 @@
 import { useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Navigation, ViewType } from '@/components/Navigation'
-import { ViewWrapper, PlaceholderView } from '@/components/ViewWrapper'
+import { ViewWrapper } from '@/components/ViewWrapper'
 import { TutorView } from '@/components/TutorView'
 import { MentorView } from '@/components/MentorView'
 import { SettingsView } from '@/components/SettingsView'
+import { ExamView } from '@/components/ExamView'
 import { Toaster } from '@/components/ui/sonner'
-
-const viewContent = {
-  exam: {
-    title: 'Egzamin',
-    description: 'Sprawdź swoją wiedzę — 20 pytań, 60 minut',
-    emoji: '📝',
-  },
-}
 
 function App() {
   const [activeView, setActiveView] = useState<ViewType>('tutor')
@@ -32,19 +25,15 @@ function App() {
             <ViewWrapper key="mentor" viewId="mentor">
               <MentorView />
             </ViewWrapper>
+          ) : activeView === 'exam' ? (
+            <ViewWrapper key="exam" viewId="exam">
+              <ExamView />
+            </ViewWrapper>
           ) : activeView === 'settings' ? (
             <ViewWrapper key="settings" viewId="settings">
               <SettingsView />
             </ViewWrapper>
-          ) : (
-            <ViewWrapper key={activeView} viewId={activeView}>
-              <PlaceholderView
-                title={viewContent[activeView].title}
-                description={viewContent[activeView].description}
-                emoji={viewContent[activeView].emoji}
-              />
-            </ViewWrapper>
-          )}
+          ) : null}
         </AnimatePresence>
       </main>
       <Toaster />
