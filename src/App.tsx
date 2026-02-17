@@ -3,14 +3,10 @@ import { AnimatePresence } from 'framer-motion'
 import { Navigation, ViewType } from '@/components/Navigation'
 import { ViewWrapper, PlaceholderView } from '@/components/ViewWrapper'
 import { TutorView } from '@/components/TutorView'
+import { MentorView } from '@/components/MentorView'
 import { Toaster } from '@/components/ui/sonner'
 
 const viewContent = {
-  mentor: {
-    title: 'Prowadzenie Sekwencyjne',
-    description: 'Sekwencyjne prowadzenie przez materiał — jak na wykładzie',
-    emoji: '👨‍🏫',
-  },
   exam: {
     title: 'Egzamin',
     description: 'Sprawdź swoją wiedzę — 20 pytań, 60 minut',
@@ -35,6 +31,10 @@ function App() {
           {activeView === 'tutor' ? (
             <ViewWrapper key="tutor" viewId="tutor">
               <TutorView />
+            </ViewWrapper>
+          ) : activeView === 'mentor' ? (
+            <ViewWrapper key="mentor" viewId="mentor">
+              <MentorView />
             </ViewWrapper>
           ) : (
             <ViewWrapper key={activeView} viewId={activeView}>
