@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Trash, DownloadSimple } from '@phosphor-icons/react'
+import { Trash, DownloadSimple } from '@phosphor-icons/react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { CurriculumPanel } from '@/components/CurriculumPanel'
 import type { Message } from '@/components/MentorView'
 
 interface MentorSidebarProps {
@@ -22,12 +23,6 @@ interface MentorSidebarProps {
   messages: Message[]
   discussedTopics: string[]
 }
-
-const defaultTopics = [
-  'Rozpocznij od podstaw kursu',
-  'Omów kluczowe pojęcia',
-  'Przejdź do zaawansowanych tematów',
-]
 
 export function MentorSidebar({ onSendPrompt, onClearChat, messages, discussedTopics }: MentorSidebarProps) {
   const [showClearDialog, setShowClearDialog] = useState(false)
@@ -68,6 +63,8 @@ export function MentorSidebar({ onSendPrompt, onClearChat, messages, discussedTo
 
   return (
     <aside className="lg:w-[30%] space-y-4">
+      <CurriculumPanel onTopicClick={onSendPrompt} />
+
       <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-xl p-6">
         <div className="space-y-4">
           <div>
@@ -83,32 +80,10 @@ export function MentorSidebar({ onSendPrompt, onClearChat, messages, discussedTo
           <Separator className="bg-border/50" />
 
           <div>
-            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-              <BookOpen size={18} className="text-emerald-400" />
-              <span>📚 Program kursu</span>
-            </h4>
-            <div className="space-y-2">
-              {defaultTopics.map((topic, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-left h-auto py-3 px-4 hover:bg-emerald-500/10 hover:border-emerald-500/50 hover:text-emerald-300 transition-colors"
-                  onClick={() => onSendPrompt(topic)}
-                >
-                  <span className="text-xs leading-relaxed">{topic}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <Separator className="bg-border/50" />
-
-          <div>
             <h4 className="text-sm font-medium mb-3 flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <span>📊</span>
-                <span>Postęp</span>
+                <span>Omówione tematy</span>
               </span>
               <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                 {totalTopicsDiscussed} {totalTopicsDiscussed === 1 ? 'temat' : 'tematów'}

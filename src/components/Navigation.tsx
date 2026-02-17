@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
 
 export type ViewType = 'tutor' | 'mentor' | 'exam' | 'settings'
 
@@ -15,6 +17,23 @@ const navItems: { id: ViewType; label: string; emoji: string }[] = [
 ]
 
 export function Navigation({ activeView, onViewChange }: NavigationProps) {
+  const [showCompletionEgg, setShowCompletionEgg] = useState(false)
+
+  useEffect(() => {
+    const checkCompletion = () => {
+      const showEgg = localStorage.getItem('show_completion_egg') === 'true'
+      setShowCompletionEgg(showEgg)
+    }
+
+    checkCompletion()
+    const interval = setInterval(checkCompletion, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const handleEggClick = () => {
+    onViewChange('exam')
+  }
+
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border">
       <div className="max-w-[1200px] mx-auto px-6 md:px-8">
@@ -26,6 +45,17 @@ export function Navigation({ activeView, onViewChange }: NavigationProps) {
             <span className="hidden sm:inline-flex px-2 py-0.5 text-xs font-medium tracking-wider uppercase bg-muted/50 text-muted-foreground rounded-md border border-border">
               v1.0
             </span>
+            {showCompletionEgg && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-2xl hover:scale-110 transition-transform animate-bounce"
+                onClick={handleEggClick}
+                title="Gratulacje! Ukończyłeś cały kurs!"
+              >
+                🥚
+              </Button>
+            )}
           </div>
 
           <nav className="flex items-center gap-2" role="tablist">

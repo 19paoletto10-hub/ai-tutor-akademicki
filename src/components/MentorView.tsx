@@ -3,13 +3,26 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import { PaperPlaneTilt } from '@phosphor-icons/react'
+import { toast } from 'sonner'
 import { MentorMessage } from '@/components/MentorMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { MentorSidebar } from '@/components/MentorSidebar'
-import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig } from '@/lib/storage'
+import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig, getCurriculumTopics } from '@/lib/storage'
 import { validateMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
+import {
+  parseCurriculumTopics,
+  getCurriculumProgress,
+  setCurrentTopic,
+  markTopicCompleted,
+  getNextTopic,
+  getPreviousTopic,
+  flattenTopics,
+  isAllCompleted,
+  type CurriculumTopic
+} from '@/lib/curriculum'
 
 export interface Message {
   id: string
@@ -80,8 +93,45 @@ export function MentorView() {
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [discussedTopics, setDiscussedTopics] = useState<string[]>([])
+  const [currentTopicName, setCurrentTopicName] = useState<string | null>(null)
+  const [curriculumTopics, setCurriculumTopics] = useState<CurriculumTopic[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const curriculumMarkdown = getCurriculumTopics()
+    if (curriculumMarkdown) {
+      const parsed = parseCurriculumTopics(curriculumMarkdown)
+      setCurriculumTopics(parsed)
+    }
+  }, [])
+
+  useEffect(() => {
+    const progress = getCurriculumProgress()
+    if (progress.current_topic && curriculumTopics.length > 0) {
+      const flattened = flattenTopics(curriculumTopics)
+      const currentTopic = flattened.find(t => t.id === progress.current_topic)
+      if (currentTopic) {
+        setCurrentTopicName(currentTopic.name)
+      }
+    } else {
+      setCurrentTopicName(null)
+    }
+  }, [curriculumTopics])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const progress = getCurriculumProgress()
+      if (progress.current_topic && curriculumTopics.length > 0) {
+        const flattened = flattenTopics(curriculumTopics)
+        const currentTopic = flattened.find(t => t.id === progress.current_topic)
+        if (currentTopic) {
+          setCurrentTopicName(currentTopic.name)
+        }
+      }
+    }, 500)
+    return () => clearInterval(interval)
+  }, [curriculumTopics])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -99,6 +149,33 @@ export function MentorView() {
     }))
     safeStorageSet(STORAGE_KEY, truncatedMessages)
   }, [messages])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && curriculumTopics.length > 0) {
+        const progress = getCurriculumProgress()
+        if (!progress.current_topic) return
+
+        if (e.key === 'ArrowRight') {
+          e.preventDefault()
+          const nextTopic = getNextTopic(progress.current_topic, curriculumTopics)
+          if (nextTopic) {
+            handleSend(`[A] Kontynuuj do następnego punktu`)
+          }
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault()
+          const prevTopic = getPreviousTopic(progress.current_topic, curriculumTopics)
+          if (prevTopic) {
+            setCurrentTopic(prevTopic.id)
+            handleSend(`Omów temat: ${prevTopic.name}`)
+          }
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [curriculumTopics])
 
   const handleSend = async (messageText?: string) => {
     const textToSend = messageText || input.trim()
@@ -166,6 +243,37 @@ Odpowiedz na ostatnie pytanie studenta w sposób akademicki i sekwencyjny. Użyj
           return current
         })
       }
+
+      if (curriculumTopics.length > 0) {
+        if (textToSend.includes('Omów temat:')) {
+          const requestedTopic = textToSend.replace('Omów temat:', '').trim()
+          const flattened = flattenTopics(curriculumTopics)
+          const topic = flattened.find(t => t.name === requestedTopic)
+          if (topic) {
+            setCurrentTopic(topic.id)
+            setCurrentTopicName(topic.name)
+          }
+        } else if (textToSend.match(/\[A\]/i) || textToSend.toLowerCase().includes('kontynuuj')) {
+          const progress = getCurriculumProgress()
+          if (progress.current_topic) {
+            markTopicCompleted(progress.current_topic)
+            const nextTopic = getNextTopic(progress.current_topic, curriculumTopics)
+            if (nextTopic) {
+              setCurrentTopic(nextTopic.id)
+              setCurrentTopicName(nextTopic.name)
+            } else {
+              const updatedProgress = getCurriculumProgress()
+              if (isAllCompleted(curriculumTopics, updatedProgress.completed_topics)) {
+                toast.success('🎉 Gratulacje! Ukończyłeś cały program kursu!', {
+                  duration: 5000,
+                  description: 'Gotowy na egzamin końcowy? 🎓'
+                })
+                localStorage.setItem('show_completion_egg', 'true')
+              }
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('Error generating response:', error)
       const errorMessage: Message = {
@@ -195,9 +303,14 @@ Odpowiedz na ostatnie pytanie studenta w sposób akademicki i sekwencyjny. Użyj
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       <div className="flex-1 lg:w-[70%] flex flex-col min-h-[calc(100vh-12rem)]">
+        {currentTopicName && (
+          <Badge className="mb-3 bg-emerald-500/20 text-emerald-300 border-emerald-500/30 px-4 py-2 w-fit">
+            📖 Aktualny temat: {currentTopicName}
+          </Badge>
+        )}
+        
         <Card className="flex-1 bg-card/60 backdrop-blur-sm border-border/50 shadow-xl flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
-            {!messages || messages.length === 0 ? (
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">{!messages || messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-4 max-w-md">
                   <div className="text-5xl">👨‍🏫</div>
