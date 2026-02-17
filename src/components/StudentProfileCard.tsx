@@ -1,10 +1,11 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Star, StarHalf } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Star } from '@phosphor-icons/react'
 import { useStudentProfile } from '@/hooks/use-student-profile'
 
 export function StudentProfileCard() {
-  const { profile, getQuizAverage } = useStudentProfile()
+  const { profile, getQuizAverage, addQuizGrade, checkLevelAdjustment } = useStudentProfile()
   const quizAverage = getQuizAverage()
 
   const renderStars = (level: number) => {
@@ -21,6 +22,12 @@ export function StudentProfileCard() {
       }
     }
     return stars
+  }
+
+  const simulateQuiz = () => {
+    const grade = Math.floor(Math.random() * 4) + 2
+    addQuizGrade(grade)
+    checkLevelAdjustment()
   }
 
   return (
@@ -71,6 +78,19 @@ export function StudentProfileCard() {
                 )}
               </div>
             </div>
+
+            {process.env.NODE_ENV === 'development' && (
+              <div className="pt-2 border-t border-border/30">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs"
+                  onClick={simulateQuiz}
+                >
+                  🎲 Symuluj quiz (dev)
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

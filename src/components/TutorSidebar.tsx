@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Lightbulb, Trash } from '@phosphor-icons/react'
+import { Lightbulb, Trash, DownloadSimple } from '@phosphor-icons/react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,10 +14,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { StudentProfileCard } from '@/components/StudentProfileCard'
+import type { Message } from '@/components/TutorView'
 
 interface TutorSidebarProps {
   onSendPrompt: (prompt: string) => void
   onClearChat: () => void
+  messages: Message[]
 }
 
 const quickPrompts = [
@@ -26,12 +28,39 @@ const quickPrompts = [
   'Podsumuj najważniejsze zagadnienia',
 ]
 
-export function TutorSidebar({ onSendPrompt, onClearChat }: TutorSidebarProps) {
+export function TutorSidebar({ onSendPrompt, onClearChat, messages }: TutorSidebarProps) {
   const [showClearDialog, setShowClearDialog] = useState(false)
 
   const handleClearConfirm = () => {
     onClearChat()
     setShowClearDialog(false)
+  }
+
+  const handleExportConversation = () => {
+    const date = new Date().toLocaleDateString('pl-PL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    
+    let markdown = `# Rozmowa z AI Tutorem — ${date}\n\n`
+    
+    messages.forEach((message) => {
+      const role = message.role === 'user' ? 'Student' : 'Tutor'
+      markdown += `## ${role}\n\n${message.content}\n\n---\n\n`
+    })
+    
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `rozmowa-tutor-${new Date().toISOString().split('T')[0]}.md`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -79,15 +108,27 @@ export function TutorSidebar({ onSendPrompt, onClearChat }: TutorSidebarProps) {
             <p className="text-xs text-muted-foreground leading-relaxed mb-3">
               Rozmowa zapisywana lokalnie w przeglądarce. Twoje dane pozostają prywatne.
             </p>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="w-full"
-              onClick={() => setShowClearDialog(true)}
-            >
-              <Trash size={16} className="mr-2" />
-              Wyczyść rozmowę
-            </Button>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={handleExportConversation}
+                disabled={messages.length === 0}
+              >
+                <DownloadSimple size={16} className="mr-2" />
+                Eksportuj rozmowę
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowClearDialog(true)}
+              >
+                <Trash size={16} className="mr-2" />
+                Wyczyść rozmowę
+              </Button>
+            </div>
           </div>
         </div>
       </Card>

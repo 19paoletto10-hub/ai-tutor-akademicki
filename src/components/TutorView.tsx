@@ -8,6 +8,7 @@ import { ChatMessage } from '@/components/ChatMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { TutorSidebar } from '@/components/TutorSidebar'
 import { useStudentProfile } from '@/hooks/use-student-profile'
+import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet } from '@/lib/storage'
 
 export interface Message {
   id: string
@@ -54,14 +55,9 @@ const MAX_MESSAGES = 50
 export function TutorView() {
   const { profile, getQuizAverage } = useStudentProfile()
   const [messages, setMessages] = useState<Message[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored) as Message[]
-        return parsed.slice(-MAX_MESSAGES)
-      }
-    } catch (error) {
-      console.error('Error loading chat history:', error)
+    const stored = safeStorageGet<Message[]>(STORAGE_KEY, [])
+    if (stored.length > 0) {
+      return trimMessagesToLimit(stored, MAX_MESSAGES)
     }
     return [WELCOME_MESSAGE]
   })
@@ -79,11 +75,12 @@ export function TutorView() {
   }, [messages])
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_MESSAGES)))
-    } catch (error) {
-      console.error('Error saving chat history:', error)
-    }
+    const trimmedMessages = trimMessagesToLimit(messages, MAX_MESSAGES)
+    const truncatedMessages = trimmedMessages.map(msg => ({
+      ...msg,
+      content: truncateMessage(msg.content)
+    }))
+    safeStorageSet(STORAGE_KEY, truncatedMessages)
   }, [messages])
 
   const handleSend = async (messageText?: string) => {
@@ -212,7 +209,7 @@ Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj 
         </Card>
       </div>
 
-      <TutorSidebar onSendPrompt={handleSend} onClearChat={handleClearChat} />
+      <TutorSidebar onSendPrompt={handleSend} onClearChat={handleClearChat} messages={messages} />
     </div>
   )
 }

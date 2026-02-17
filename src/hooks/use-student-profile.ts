@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 
 export interface StudentProfile {
   level: number
@@ -87,6 +88,27 @@ export function useStudentProfile() {
     })
   }
 
+  const checkLevelAdjustment = () => {
+    if (profile.quiz_history.length < 3) return
+
+    const lastThree = profile.quiz_history.slice(-3)
+    const average = lastThree.reduce((acc, grade) => acc + grade, 0) / 3
+
+    if (average >= 4.5 && profile.level < 5) {
+      setProfile((current) => {
+        const newLevel = current.level + 1
+        toast.success(`🎉 Awans! Poziom ${newLevel}`)
+        return { ...current, level: newLevel }
+      })
+    } else if (average <= 2.5 && profile.level > 1) {
+      setProfile((current) => {
+        const newLevel = current.level - 1
+        toast.info(`📚 Poziom obniżony do ${newLevel} — poćwicz jeszcze!`)
+        return { ...current, level: newLevel }
+      })
+    }
+  }
+
   const getQuizAverage = (): number | null => {
     if (profile.quiz_history.length === 0) return null
     const sum = profile.quiz_history.reduce((acc, grade) => acc + grade, 0)
@@ -100,6 +122,7 @@ export function useStudentProfile() {
     removeWeakTopic,
     addMistake,
     addQuizGrade,
+    checkLevelAdjustment,
     getQuizAverage,
   }
 }
