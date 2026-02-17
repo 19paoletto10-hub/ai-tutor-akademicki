@@ -84,7 +84,25 @@ export function useStudentProfile() {
       if (history.length > MAX_QUIZ_HISTORY) {
         history.shift()
       }
-      return { ...current, quiz_history: history }
+      
+      const newProfile = { ...current, quiz_history: history }
+      
+      if (history.length >= 3) {
+        const lastThree = history.slice(-3)
+        const average = lastThree.reduce((acc, g) => acc + g, 0) / 3
+        
+        if (average >= 4.5 && current.level < 5) {
+          const newLevel = current.level + 1
+          toast.success(`🎉 Awans! Poziom ${newLevel}`)
+          return { ...newProfile, level: newLevel }
+        } else if (average <= 2.5 && current.level > 1) {
+          const newLevel = current.level - 1
+          toast.info(`📚 Poziom obniżony do ${newLevel} — poćwicz jeszcze!`)
+          return { ...newProfile, level: newLevel }
+        }
+      }
+      
+      return newProfile
     })
   }
 

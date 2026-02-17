@@ -117,7 +117,7 @@ export function TutorSidebar({ onSendPrompt, onClearChat, messages }: TutorSideb
                 disabled={messages.length === 0}
               >
                 <DownloadSimple size={16} className="mr-2" />
-                Eksportuj rozmowę
+                📥 Eksportuj rozmowę
               </Button>
               <Button
                 variant="destructive"
@@ -126,7 +126,7 @@ export function TutorSidebar({ onSendPrompt, onClearChat, messages }: TutorSideb
                 onClick={() => setShowClearDialog(true)}
               >
                 <Trash size={16} className="mr-2" />
-                Wyczyść rozmowę
+                🗑️ Wyczyść rozmowę
               </Button>
             </div>
           </div>

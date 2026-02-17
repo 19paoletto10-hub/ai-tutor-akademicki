@@ -5,7 +5,7 @@ import { Star } from '@phosphor-icons/react'
 import { useStudentProfile } from '@/hooks/use-student-profile'
 
 export function StudentProfileCard() {
-  const { profile, getQuizAverage, addQuizGrade, checkLevelAdjustment } = useStudentProfile()
+  const { profile, getQuizAverage, addQuizGrade } = useStudentProfile()
   const quizAverage = getQuizAverage()
 
   const renderStars = (level: number) => {
@@ -27,7 +27,6 @@ export function StudentProfileCard() {
   const simulateQuiz = () => {
     const grade = Math.floor(Math.random() * 4) + 2
     addQuizGrade(grade)
-    checkLevelAdjustment()
   }
 
   return (

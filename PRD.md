@@ -47,12 +47,12 @@ This is a multi-view educational application with view switching, configuration 
 - **Progression**: User clicks suggestion → Text auto-fills and sends → AI responds → User sees example interaction
 - **Success criteria**: Prompts are contextually relevant, clicking sends immediately, suggestions are helpful for new users
 
-### Conversation Persistence
-- **Functionality**: Local browser storage of chat history using localStorage (key: 'tutor_chat_history')
-- **Purpose**: Maintain conversation context across sessions with privacy-first approach
+### Conversation Persistence with Storage Management
+- **Functionality**: Intelligent local browser storage of chat history using localStorage (key: 'tutor_chat_history') with automatic trimming and quota management
+- **Purpose**: Maintain conversation context across sessions with privacy-first approach while preventing storage quota issues
 - **Trigger**: Automatic on message send/receive, loads on component mount
-- **Progression**: Message created → Saved to localStorage → Trimmed to max 50 messages → Available on page reload → User can clear via confirmation dialog
-- **Success criteria**: History persists across page reloads, clear function shows confirmation dialog before removing all messages except welcome message, no data sent to external services, localStorage errors handled gracefully
+- **Progression**: Message created → Content truncated to max 4000 characters → Saved to localStorage → Messages trimmed to max 50 entries → Available on page reload → User can clear via confirmation dialog or export to markdown file
+- **Success criteria**: History persists across page reloads with max 50 messages and 4000 chars per message, QuotaExceededError handled gracefully with automatic trimming and toast notification ("Pamięć pełna — starsza historia została usunięta"), clear function shows confirmation dialog, no data sent to external services
 
 ### Clear Chat Confirmation
 - **Functionality**: Alert dialog that confirms chat history deletion before proceeding
@@ -60,6 +60,20 @@ This is a multi-view educational application with view switching, configuration 
 - **Trigger**: User clicks "Wyczyść rozmowę" button in sidebar
 - **Progression**: User clicks clear button → Confirmation dialog appears → User can cancel or confirm → On confirm, all messages except welcome message are removed → Dialog closes
 - **Success criteria**: Dialog clearly explains consequences, cancel button works, confirm button clears chat and closes dialog, welcome message remains after clearing
+
+### Conversation Export
+- **Functionality**: Export full conversation history as a downloadable Markdown file
+- **Purpose**: Allow users to save and review their learning conversations outside the app
+- **Trigger**: User clicks "📥 Eksportuj rozmowę" button in sidebar
+- **Progression**: User clicks export button → Markdown file is generated with header, formatted messages, and separators → Browser download initiated → File saved with timestamp
+- **Success criteria**: Markdown file includes header "# Rozmowa z AI Tutorem — {date}", each message formatted as "## Student" or "## Tutor" with content and --- separators, filename includes date in ISO format, button disabled when no messages exist
+
+### Student Profile with Adaptive Level System
+- **Functionality**: Persistent student profile tracking learning level (1-5), weak topics (max 10), recent mistakes (max 5), and quiz history (max 10 grades 2-5)
+- **Purpose**: Enable AI to adapt explanation complexity and focus to student's demonstrated knowledge level
+- **Trigger**: Profile loads on app start, updates after quiz completion
+- **Progression**: Quiz completed → Grade added to history → If 3+ quizzes exist, calculate average of last 3 → If avg ≥ 4.5 and level < 5, increment level with toast "🎉 Awans! Poziom X" → If avg ≤ 2.5 and level > 1, decrement level with toast "📚 Poziom obniżony do X — poćwicz jeszcze!" → Profile displayed in sidebar → Profile context prepended to all AI prompts
+- **Success criteria**: Level adjusts automatically after quiz grading based on rolling 3-quiz average, profile data persists in localStorage (key: 'student_profile'), profile displayed in sidebar shows level (1-5 visual indicator), weak topics as pills, and quiz average, AI prompts include profile context block with level, weak topics, last mistakes, and quiz average
 
 ### Responsive Chat Layout
 - **Functionality**: Chat area and sidebar adapt to screen size (70/30 split on desktop, stacked on mobile)
@@ -75,6 +89,11 @@ This is a multi-view educational application with view switching, configuration 
 - **Keyboard Navigation**: Tab key navigation through nav items with visible focus states
 - **Reduced Motion**: Respect prefers-reduced-motion for users sensitive to animations
 - **Long Content**: Ensure sticky header doesn't obscure content; proper spacing below header
+- **localStorage Quota Exceeded**: Automatically trim oldest messages when storage quota is reached, show toast notification to user
+- **Very Long Messages**: Truncate messages exceeding 4000 characters before storage to prevent quota issues
+- **Empty Conversation Export**: Disable export button when no messages exist in conversation
+- **Level Boundaries**: Level clamped between 1-5, cannot go below or above these limits regardless of quiz performance
+- **Insufficient Quiz Data**: Level adjustment only triggers after 3+ quizzes completed to ensure reliable average
 
 ## Design Direction
 
