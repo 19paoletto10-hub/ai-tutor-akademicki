@@ -4,9 +4,14 @@ import { formatDistanceToNow } from 'date-fns'
 import { pl } from 'date-fns/locale'
 import { marked } from 'marked'
 import { useEffect, useState } from 'react'
+import { ActionButtons } from '@/components/ActionButtons'
+import { QuizEvaluationCard, QuizEvaluation } from '@/components/QuizEvaluationCard'
 
 interface ChatMessageProps {
   message: Message
+  showActionButtons?: boolean
+  onAction?: (actionMessage: string) => void
+  isGenerating?: boolean
 }
 
 marked.setOptions({
@@ -14,7 +19,7 @@ marked.setOptions({
   gfm: true,
 })
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, showActionButtons = false, onAction, isGenerating = false }: ChatMessageProps) {
   const [htmlContent, setHtmlContent] = useState('')
   const isUser = message.role === 'user'
 
@@ -31,6 +36,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
     locale: pl,
   })
 
+  const quizEvaluation = message.quizEvaluation
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -39,7 +46,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       transition={{ duration: 0.2 }}
       className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
     >
-      <div className={`flex flex-col gap-2 max-w-[85%] md:max-w-[75%] ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`flex flex-col gap-2 max-w-[85%] md:max-w-[75%] ${isUser ? 'items-end' : 'items-start'} w-full`}>
         {!isUser && (
           <div className="flex items-center gap-2 px-1">
             <span className="text-lg">🎓</span>
@@ -49,7 +56,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         
         <div
           className={`
-            rounded-2xl px-5 py-3.5 shadow-lg
+            rounded-2xl px-5 py-3.5 shadow-lg w-full
             ${
               isUser
                 ? 'bg-gradient-to-br from-primary via-secondary to-secondary text-primary-foreground'
@@ -84,6 +91,25 @@ export function ChatMessage({ message }: ChatMessageProps) {
             />
           )}
         </div>
+
+        {!isUser && showActionButtons && onAction && (
+          <ActionButtons onAction={onAction} disabled={isGenerating} />
+        )}
+
+        {!isUser && quizEvaluation && onAction && (
+          <QuizEvaluationCard 
+            evaluation={quizEvaluation} 
+            onAction={(action) => {
+              if (action === 'repeat') {
+                onAction('[ACTION] Powtórz ten temat z innymi przykładami — wyjaśnij go inaczej.')
+              } else if (action === 'next') {
+                onAction('[ACTION] Wygeneruj następne pytanie quiz z tego samego tematu.')
+              } else if (action === 'new') {
+                onAction('[ACTION] Przejdźmy do nowego tematu.')
+              }
+            }}
+          />
+        )}
 
         <span className="text-xs text-muted-foreground px-1">{timeAgo}</span>
       </div>
