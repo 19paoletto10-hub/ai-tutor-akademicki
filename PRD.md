@@ -68,6 +68,23 @@ This is a multi-view educational application with view switching, configuration 
 - **Progression**: User clicks export button → Markdown file is generated with header, formatted messages, and separators → Browser download initiated → File saved with timestamp
 - **Success criteria**: Markdown file includes header "# Rozmowa z AI Tutorem — {date}", each message formatted as "## Student" or "## Tutor" with content and --- separators, filename includes date in ISO format, button disabled when no messages exist
 
+### Academic Integrity Safeguards
+- **Functionality**: Anti-cheating pattern detection that blocks requests for complete exam/assignment solutions using Polish regex patterns before sending to LLM
+- **Purpose**: Prevent academic dishonesty while still allowing students to get help understanding concepts
+- **Trigger**: User sends message in Tutor or Mentor mode
+- **Progression**: User sends message → Anti-cheating regex patterns checked first → If match found, block message displayed with amber/yellow warning icon → User not charged for LLM call → If no match, proceed to topic validation → If passes, send to LLM
+- **Success criteria**: Patterns detect "zrób mi (całe|cały) rozwiązanie", "podaj gotowca", "to jest egzamin i potrzebuję odpowiedzi", "rozwiąż bez wyjaśnień", "napisz całą pracę", "zrób za mnie zadanie", "potrzebuję gotową odpowiedź" (case-insensitive), refusal message displayed as amber-bordered card with warning icon and helpful alternatives, message not sent to LLM (no API cost), conversation continues normally after refusal
+
+### Topic Validation (Three-Level System)
+- **Functionality**: Three-level validation system to ensure questions are academically relevant without unnecessary LLM costs
+- **Purpose**: Block completely off-topic spam while allowing all legitimate academic questions and conversation continuations through fast checks first
+- **Trigger**: After anti-cheating check passes, before sending user message to LLM
+- **Progression**: 
+  - Level 1 (Bypass): Check message length (≤3 chars), single letter/digit, contextual words (tak, nie, ok, kontynuuj, dalej, więcej, wyjaśnij, rozwiń), starts with "opcja" or "moja odpowiedź" → If match: ALLOW (no LLM cost)
+  - Level 2 (Keyword Check): Check for course config words (3+ letter words from course name/description) or academic keywords (definicja, wyjaśnij, przykład, quiz, egzamin, teoria, metoda, analiza, dlaczego, jak działa, co to jest) → If match: ALLOW (no LLM cost)
+  - Level 3 (LLM Check): Send validation request to gpt-4o-mini asking for 0.0-1.0 score (0.0=academic, 1.0=off-topic) → If score >= 0.90: BLOCK with blue info card → If score < 0.90: ALLOW
+- **Success criteria**: Fast bypass for conversational continuations (no API cost), keyword matching catches 95%+ academic questions (no API cost), LLM validation only runs for ambiguous cases with very liberal threshold (0.90), block message shown as blue-bordered card with info icon listing what tutor can help with (course topics, concepts, examples, exam prep), validation blocks saved to message history but don't consume action buttons, both modes (Tutor and Mentor) protected equally
+
 ### Course Configuration Settings
 - **Functionality**: Settings view allowing configuration of course name and description (up to 6000 characters) that gets injected into AI system prompts
 - **Purpose**: Focus AI responses exclusively on the configured course material and prevent off-topic answers

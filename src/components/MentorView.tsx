@@ -8,12 +8,18 @@ import { MentorMessage } from '@/components/MentorMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { MentorSidebar } from '@/components/MentorSidebar'
 import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig } from '@/lib/storage'
+import { validateMessage } from '@/lib/validators'
+import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
 
 export interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: number
+  validationBlock?: {
+    type: 'anti-cheating' | 'off-topic'
+    message: string
+  }
 }
 
 const DEFAULT_SYSTEM_PROMPT = `Jesteś profesorem akademickim — autorytetem w dziedzinie omawianego kursu.
@@ -109,6 +115,24 @@ export function MentorView() {
     setInput('')
     setIsGenerating(true)
 
+    const validationResult = await validateMessage(textToSend)
+    
+    if (!validationResult.allowed) {
+      const blockMessage: Message = {
+        id: `block-${Date.now()}`,
+        role: 'assistant',
+        content: validationResult.blockMessage || '',
+        timestamp: Date.now(),
+        validationBlock: {
+          type: validationResult.blockReason!,
+          message: validationResult.blockMessage || ''
+        }
+      }
+      setMessages((current) => [...current, blockMessage])
+      setIsGenerating(false)
+      return
+    }
+
     try {
       const conversationHistory = [...messages, userMessage]
         .map((msg) => `${msg.role === 'user' ? 'Student' : 'Profesor'}: ${msg.content}`)
@@ -187,13 +211,25 @@ Odpowiedz na ostatnie pytanie studenta w sposób akademicki i sekwencyjny. Użyj
             ) : (
               <>
                 <AnimatePresence initial={false}>
-                  {(messages || []).map((message) => (
-                    <MentorMessage 
-                      key={message.id} 
-                      message={message}
-                      onOptionClick={handleSend}
-                    />
-                  ))}
+                  {(messages || []).map((message) => {
+                    if (message.validationBlock) {
+                      return (
+                        <ValidationBlockMessage
+                          key={message.id}
+                          type={message.validationBlock.type}
+                          message={message.validationBlock.message}
+                        />
+                      )
+                    }
+                    
+                    return (
+                      <MentorMessage 
+                        key={message.id} 
+                        message={message}
+                        onOptionClick={handleSend}
+                      />
+                    )
+                  })}
                 </AnimatePresence>
                 {isGenerating && <TypingIndicator />}
                 <div ref={messagesEndRef} />

@@ -10,6 +10,8 @@ import { TutorSidebar } from '@/components/TutorSidebar'
 import { useStudentProfile } from '@/hooks/use-student-profile'
 import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction } from '@/lib/storage'
 import { QuizEvaluation } from '@/components/QuizEvaluationCard'
+import { validateMessage } from '@/lib/validators'
+import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
 
 export interface Message {
   id: string
@@ -18,6 +20,10 @@ export interface Message {
   timestamp: number
   isQuizQuestion?: boolean
   quizEvaluation?: QuizEvaluation
+  validationBlock?: {
+    type: 'anti-cheating' | 'off-topic'
+    message: string
+  }
 }
 
 const DEFAULT_SYSTEM_PROMPT = `Jesteś profesjonalnym tutorem akademickim. Twoim zadaniem jest AKTYWNIE uczyć i prowadzić studenta krok po kroku przez materiał kursowy.
@@ -185,6 +191,28 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
 
     setMessages((current) => [...current, userMessage])
     setInput('')
+    
+    if (!isAnswerToQuiz) {
+      setIsGenerating(true)
+      const validationResult = await validateMessage(textToSend)
+      
+      if (!validationResult.allowed) {
+        const blockMessage: Message = {
+          id: `block-${Date.now()}`,
+          role: 'assistant',
+          content: validationResult.blockMessage || '',
+          timestamp: Date.now(),
+          validationBlock: {
+            type: validationResult.blockReason!,
+            message: validationResult.blockMessage || ''
+          }
+        }
+        setMessages((current) => [...current, blockMessage])
+        setIsGenerating(false)
+        return
+      }
+    }
+
     setIsGenerating(true)
 
     try {
@@ -306,6 +334,16 @@ Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj 
               <>
                 <AnimatePresence initial={false}>
                   {(messages || []).map((message, index) => {
+                    if (message.validationBlock) {
+                      return (
+                        <ValidationBlockMessage
+                          key={message.id}
+                          type={message.validationBlock.type}
+                          message={message.validationBlock.message}
+                        />
+                      )
+                    }
+                    
                     const isLastAssistantMessage = 
                       message.role === 'assistant' && 
                       index === messages.length - 1
