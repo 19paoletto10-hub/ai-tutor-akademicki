@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,24 +15,54 @@ export interface Message {
   timestamp: number
 }
 
-const SYSTEM_PROMPT = `Jesteś profesjonalnym tutorem akademickim. Twoja rola to:
+const SYSTEM_PROMPT = `Jesteś profesjonalnym tutorem akademickim. Twoim zadaniem jest AKTYWNIE uczyć i prowadzić studenta krok po kroku przez materiał kursowy.
 
-1. Odpowiadać na pytania studentów w sposób jasny, szczegółowy i zrozumiały
-2. Rozwijać odpowiedzi krok po kroku, wyjaśniając podstawowe koncepcje
-3. Podawać przykłady praktyczne, które ułatwiają zrozumienie
-4. Używać języka polskiego w sposób formalny, ale przystępny
-5. Formatować odpowiedzi z użyciem markdown dla lepszej czytelności:
-   - Używaj nagłówków (##, ###) dla struktury
-   - Używaj list punktowanych i numerowanych
-   - Używaj bloków kodu dla przykładów technicznych
-   - Używaj pogrubienia dla kluczowych terminów
-6. Zachęcać do zadawania pytań uzupełniających
-7. Być cierpliwym i pomocnym, jak prawdziwy nauczyciel akademicki
+TRYB AKTYWNEGO PROWADZENIA:
+Gdy student wybiera temat lub zadaje pytanie, TY przejmij inicjatywę:
+1. Wyjaśnij temat według schematu: definicja → intuicja → przykład
+2. Podaj źródła jeśli je znasz
 
-Odpowiadaj zawsze merytorycznie i staraj się być jak najbardziej pomocny dla studenta.`
+WAŻNE: NIE dodawaj sekcji "Mini-sprawdzenie" ani quizu automatycznie - student sam zdecyduje kiedy chce quiz (przez przycisk).
+
+Zasady:
+- Jeśli student prosi o gotowe rozwiązanie zadania/kolokwium, odmów i zaproponuj wskazówki oraz wyjaśnienie metody.
+- Odpowiadaj po polsku.
+
+FORMAT ODPOWIEDZI:
+1) **Wyjaśnienie**
+[Twoje wyjaśnienie tematu - definicja, intuicja, przykład]
+
+2) **Krok po kroku**
+[Opcjonalnie - jeśli dotyczy procedur/obliczeń]
+
+3) **Źródła**
+[Jeśli znasz źródła, podaj je. Jeśli nie — napisz "Odpowiedź na podstawie wiedzy ogólnej."]
+
+Jeśli nie znasz odpowiedzi — powiedz wprost, nie wymyślaj.`
+
+const WELCOME_MESSAGE: Message = {
+  id: 'welcome',
+  role: 'assistant',
+  content: 'Cześć! 👋 Jestem Twoim tutorem akademickim. Zadaj mi pytanie z materiału kursowego, a wyjaśnię Ci temat krok po kroku. Możesz też wybrać jedno z szybkich pytań po prawej stronie.',
+  timestamp: Date.now(),
+}
+
+const STORAGE_KEY = 'tutor_chat_history'
+const MAX_MESSAGES = 50
 
 export function TutorView() {
-  const [messages, setMessages] = useKV<Message[]>('tutor-messages', [])
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored) as Message[]
+        return parsed.slice(-MAX_MESSAGES)
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error)
+    }
+    return [WELCOME_MESSAGE]
+  })
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -47,6 +76,14 @@ export function TutorView() {
     scrollToBottom()
   }, [messages])
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_MESSAGES)))
+    } catch (error) {
+      console.error('Error saving chat history:', error)
+    }
+  }, [messages])
+
   const handleSend = async (messageText?: string) => {
     const textToSend = messageText || input.trim()
     if (!textToSend || isGenerating) return
@@ -58,13 +95,12 @@ export function TutorView() {
       timestamp: Date.now(),
     }
 
-    setMessages((current) => [...(current || []), userMessage])
+    setMessages((current) => [...current, userMessage])
     setInput('')
     setIsGenerating(true)
 
     try {
-      const currentMessages = messages || []
-      const conversationHistory = [...currentMessages, userMessage]
+      const conversationHistory = [...messages, userMessage]
         .map((msg) => `${msg.role === 'user' ? 'Student' : 'Tutor'}: ${msg.content}`)
         .join('\n\n')
 
@@ -84,7 +120,7 @@ Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj 
         timestamp: Date.now(),
       }
 
-      setMessages((current) => [...(current || []), assistantMessage])
+      setMessages((current) => [...current, assistantMessage])
     } catch (error) {
       console.error('Error generating response:', error)
       const errorMessage: Message = {
@@ -93,7 +129,7 @@ Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj 
         content: 'Przepraszam, wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.',
         timestamp: Date.now(),
       }
-      setMessages((current) => [...(current || []), errorMessage])
+      setMessages((current) => [...current, errorMessage])
     } finally {
       setIsGenerating(false)
     }
@@ -107,7 +143,7 @@ Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj 
   }
 
   const handleClearChat = () => {
-    setMessages([])
+    setMessages([WELCOME_MESSAGE])
   }
 
   return (

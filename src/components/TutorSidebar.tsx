@@ -1,7 +1,18 @@
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Lightbulb, Trash } from '@phosphor-icons/react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface TutorSidebarProps {
   onSendPrompt: (prompt: string) => void
@@ -15,6 +26,13 @@ const quickPrompts = [
 ]
 
 export function TutorSidebar({ onSendPrompt, onClearChat }: TutorSidebarProps) {
+  const [showClearDialog, setShowClearDialog] = useState(false)
+
+  const handleClearConfirm = () => {
+    onClearChat()
+    setShowClearDialog(false)
+  }
+
   return (
     <aside className="lg:w-[30%] space-y-4">
       <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-xl p-6">
@@ -62,14 +80,31 @@ export function TutorSidebar({ onSendPrompt, onClearChat }: TutorSidebarProps) {
               variant="destructive"
               size="sm"
               className="w-full"
-              onClick={onClearChat}
+              onClick={() => setShowClearDialog(true)}
             >
               <Trash size={16} className="mr-2" />
-              Wyczyść historię
+              Wyczyść rozmowę
             </Button>
           </div>
         </div>
       </Card>
+
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Wyczyścić historię rozmowy?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ta akcja usunie całą historię rozmowy z pamięci przeglądarki. Nie będzie można jej cofnąć.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearConfirm}>
+              Wyczyść
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   )
 }

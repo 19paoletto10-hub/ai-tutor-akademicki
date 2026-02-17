@@ -27,11 +27,11 @@ This is a multi-view educational application with view switching, configuration 
 - **Success criteria**: Header stays visible during scroll, backdrop blur creates depth, no performance issues with blur effect
 
 ### AI Tutor Chat Interface
-- **Functionality**: Full-featured chat interface with AI-powered academic tutoring using GPT-4
-- **Purpose**: Provides interactive Q&A learning experience with step-by-step explanations
+- **Functionality**: Full-featured chat interface with AI-powered academic tutoring using GPT-4o with active teaching methodology
+- **Purpose**: Provides interactive Q&A learning experience with step-by-step explanations following a structured teaching format
 - **Trigger**: User types question and presses Enter or clicks send button
-- **Progression**: User enters question → Message appears in chat → AI typing indicator shows → AI response appears with markdown formatting → Conversation history persists → User can continue conversation
-- **Success criteria**: Messages save to browser storage, markdown renders correctly, typing indicator provides feedback, auto-scroll to new messages, conversation maintains context
+- **Progression**: User enters question → Message appears in chat → AI typing indicator shows → AI response appears with structured markdown formatting (definition → intuition → example → sources) → Conversation history persists in localStorage → User can continue conversation
+- **Success criteria**: Messages save to localStorage (max 50 messages), markdown renders correctly, typing indicator provides feedback, auto-scroll to new messages, conversation maintains context, welcome message displays on first load
 
 ### Chat Message Display
 - **Functionality**: Differentiated message bubbles for user and AI with markdown rendering
@@ -48,11 +48,18 @@ This is a multi-view educational application with view switching, configuration 
 - **Success criteria**: Prompts are contextually relevant, clicking sends immediately, suggestions are helpful for new users
 
 ### Conversation Persistence
-- **Functionality**: Local browser storage of chat history using useKV hook
-- **Purpose**: Maintain conversation context across sessions
-- **Trigger**: Automatic on message send/receive
-- **Progression**: Message created → Saved to browser storage → Available on page reload → Can be cleared by user
-- **Success criteria**: History persists across page reloads, clear function removes all messages, no data sent to external services
+- **Functionality**: Local browser storage of chat history using localStorage (key: 'tutor_chat_history')
+- **Purpose**: Maintain conversation context across sessions with privacy-first approach
+- **Trigger**: Automatic on message send/receive, loads on component mount
+- **Progression**: Message created → Saved to localStorage → Trimmed to max 50 messages → Available on page reload → User can clear via confirmation dialog
+- **Success criteria**: History persists across page reloads, clear function shows confirmation dialog before removing all messages except welcome message, no data sent to external services, localStorage errors handled gracefully
+
+### Clear Chat Confirmation
+- **Functionality**: Alert dialog that confirms chat history deletion before proceeding
+- **Purpose**: Prevent accidental data loss and provide clear feedback about action consequences
+- **Trigger**: User clicks "Wyczyść rozmowę" button in sidebar
+- **Progression**: User clicks clear button → Confirmation dialog appears → User can cancel or confirm → On confirm, all messages except welcome message are removed → Dialog closes
+- **Success criteria**: Dialog clearly explains consequences, cancel button works, confirm button clears chat and closes dialog, welcome message remains after clearing
 
 ### Responsive Chat Layout
 - **Functionality**: Chat area and sidebar adapt to screen size (70/30 split on desktop, stacked on mobile)
