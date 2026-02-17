@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { StudentProfileCard } from '@/components/StudentProfileCard'
 
 interface TutorSidebarProps {
   onSendPrompt: (prompt: string) => void
@@ -35,6 +36,8 @@ export function TutorSidebar({ onSendPrompt, onClearChat }: TutorSidebarProps) {
 
   return (
     <aside className="lg:w-[30%] space-y-4">
+      <StudentProfileCard />
+      
       <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-xl p-6">
         <div className="space-y-4">
           <div>

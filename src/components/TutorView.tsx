@@ -7,6 +7,7 @@ import { PaperPlaneTilt } from '@phosphor-icons/react'
 import { ChatMessage } from '@/components/ChatMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { TutorSidebar } from '@/components/TutorSidebar'
+import { useStudentProfile } from '@/hooks/use-student-profile'
 
 export interface Message {
   id: string
@@ -51,6 +52,7 @@ const STORAGE_KEY = 'tutor_chat_history'
 const MAX_MESSAGES = 50
 
 export function TutorView() {
+  const { profile, getQuizAverage } = useStudentProfile()
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -88,6 +90,16 @@ export function TutorView() {
     const textToSend = messageText || input.trim()
     if (!textToSend || isGenerating) return
 
+    const quizAverage = getQuizAverage()
+    const profileContext = `[PROFIL STUDENTA]
+Poziom: ${profile.level}/5
+Słabe tematy: ${profile.weak_topics.length > 0 ? profile.weak_topics.join(', ') : 'brak'}
+Ostatnie błędy: ${profile.last_mistakes.length > 0 ? profile.last_mistakes.join(', ') : 'brak'}
+Średnia quizów: ${quizAverage !== null ? quizAverage.toFixed(1) : 'brak danych'}
+
+[PYTANIE STUDENTA]
+${textToSend}`
+
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -109,7 +121,7 @@ export function TutorView() {
 Historia rozmowy:
 ${conversationHistory}
 
-Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj markdown do formatowania odpowiedzi.`
+Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj markdown do formatowania odpowiedzi. Uwzględnij profil studenta w swojej odpowiedzi - dostosuj poziom wyjaśnień do jego poziomu, zwróć szczególną uwagę na słabe tematy jeśli są powiązane z pytaniem.`
 
       const response = await window.spark.llm(promptText, 'gpt-4o')
 
