@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FloppyDisk, ArrowClockwise } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { FileUploadSection } from '@/components/FileUploadSection'
 
 interface CourseConfig {
   courseName: string
@@ -291,6 +292,8 @@ export function SettingsView() {
           </div>
 
           <div className="space-y-8">
+            <FileUploadSection />
+
             <div className="space-y-4 pb-8 border-b border-white/10">
               <h3 className="text-xl font-semibold flex items-center gap-2">
                 🎯 Temat kursu

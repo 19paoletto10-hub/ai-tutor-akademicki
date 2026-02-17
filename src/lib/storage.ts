@@ -95,6 +95,19 @@ export function getPersonalizationConfig(): PersonalizationConfig {
   }
 }
 
+export function getUploadedMaterials(): any[] {
+  try {
+    const stored = localStorage.getItem('uploaded_materials')
+    if (stored) {
+      const materials = JSON.parse(stored)
+      return Array.isArray(materials) ? materials.filter((m: any) => m.status === 'processed') : []
+    }
+  } catch (error) {
+    console.error('Error loading uploaded materials:', error)
+  }
+  return []
+}
+
 export function getCustomTutorPrompt(): string | null {
   try {
     return localStorage.getItem('custom_tutor_prompt')
@@ -148,3 +161,100 @@ export function injectLanguageInstruction(systemPrompt: string, language: 'Polsk
   }
   return systemPrompt
 }
+
+export function injectKnowledgeBase(systemPrompt: string, userMessage?: string): string {
+  const materials = getUploadedMaterials()
+  
+  if (materials.length === 0) {
+    return systemPrompt
+  }
+  
+  let knowledgeBase = `\n\nBAZA WIEDZY — MATERIAŁY KURSOWE:
+Poniżej znajdują się fragmenty materiałów kursowych przesłanych przez studenta. Odpowiadaj NA ICH PODSTAWIE gdy to możliwe. Cytuj źródła (nazwa pliku) gdy korzystasz z materiałów.
+
+`
+  
+  const allChunks: Array<{
+    filename: string
+    text: string
+    relevanceScore: number
+  }> = []
+  
+  materials.forEach((doc: any) => {
+    if (doc.chunks && Array.isArray(doc.chunks)) {
+      doc.chunks.forEach((chunk: any) => {
+        let score = 0
+        
+        if (userMessage) {
+          const keywords = userMessage
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((word: string) => word.length >= 3)
+          
+          const chunkText = chunk.text.toLowerCase()
+          keywords.forEach((keyword: string) => {
+            const matches = (chunkText.match(new RegExp(keyword, 'g')) || []).length
+            score += matches
+          })
+        }
+        
+        allChunks.push({
+          filename: doc.filename,
+          text: chunk.text,
+          relevanceScore: score
+        })
+      })
+    }
+  })
+  
+  if (userMessage && allChunks.length > 0) {
+    allChunks.sort((a, b) => b.relevanceScore - a.relevanceScore)
+  }
+  
+  const maxChars = 80000
+  const chunksPerFile = Math.max(2, Math.floor(maxChars / (materials.length * 1500)))
+  const selectedChunks: typeof allChunks = []
+  const fileChunkCount = new Map<string, number>()
+  
+  for (const item of allChunks) {
+    const count = fileChunkCount.get(item.filename) || 0
+    if (count < chunksPerFile) {
+      selectedChunks.push(item)
+      fileChunkCount.set(item.filename, count + 1)
+    }
+  }
+  
+  let currentChars = knowledgeBase.length
+  const fileTexts = new Map<string, string[]>()
+  
+  for (const item of selectedChunks) {
+    const chunkWithNewlines = item.text + '\n\n'
+    if (currentChars + chunkWithNewlines.length > maxChars) {
+      break
+    }
+    
+    if (!fileTexts.has(item.filename)) {
+      fileTexts.set(item.filename, [])
+    }
+    fileTexts.get(item.filename)!.push(item.text)
+    currentChars += chunkWithNewlines.length
+  }
+  
+  fileTexts.forEach((texts, filename) => {
+    knowledgeBase += `--- Źródło: ${filename} ---\n`
+    knowledgeBase += texts.join('\n\n')
+    knowledgeBase += '\n\n'
+  })
+  
+  knowledgeBase += `WAŻNE:
+- Przy odpowiadaniu PRIORYTETOWO traktuj informacje z materiałów kursowych.
+- Gdy odpowiedź pochodzi z materiałów, dodaj na końcu: "📚 Źródło: {filename}".
+- Gdy materiały nie zawierają odpowiedzi, korzystaj z wiedzy ogólnej i zaznacz to.
+
+---
+
+`
+  
+  return systemPrompt + knowledgeBase
+}
+

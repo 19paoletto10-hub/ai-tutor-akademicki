@@ -8,7 +8,7 @@ import { ChatMessage } from '@/components/ChatMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { TutorSidebar } from '@/components/TutorSidebar'
 import { useStudentProfile } from '@/hooks/use-student-profile'
-import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction } from '@/lib/storage'
+import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction, injectKnowledgeBase } from '@/lib/storage'
 import { QuizEvaluation } from '@/components/QuizEvaluationCard'
 import { validateMessage, isVagueMessage, augmentContextualMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
@@ -303,7 +303,7 @@ FORMAT (DOKŁADNIE):
 [Pytanie sprawdzające — otwarte lub z opcjami A/B/C/D]`
       }
 
-      const promptText = `${injectCourseContext(systemPrompt)}
+      const promptText = `${injectKnowledgeBase(injectCourseContext(systemPrompt), textToSend)}
 
 Historia rozmowy:
 ${conversationHistory}

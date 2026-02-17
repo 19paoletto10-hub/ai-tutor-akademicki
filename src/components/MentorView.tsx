@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { MentorMessage } from '@/components/MentorMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { MentorSidebar } from '@/components/MentorSidebar'
-import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig, getCurriculumTopics } from '@/lib/storage'
+import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig, getCurriculumTopics, injectKnowledgeBase } from '@/lib/storage'
 import { validateMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
 import {
@@ -215,7 +215,7 @@ export function MentorView() {
         .map((msg) => `${msg.role === 'user' ? 'Student' : 'Profesor'}: ${msg.content}`)
         .join('\n\n')
 
-      const promptText = `${injectCourseContext(getSystemPrompt())}
+      const promptText = `${injectKnowledgeBase(injectCourseContext(getSystemPrompt()), textToSend)}
 
 Historia rozmowy:
 ${conversationHistory}
