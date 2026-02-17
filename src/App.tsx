@@ -2,13 +2,10 @@ import { useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Navigation, ViewType } from '@/components/Navigation'
 import { ViewWrapper, PlaceholderView } from '@/components/ViewWrapper'
+import { TutorView } from '@/components/TutorView'
+import { Toaster } from '@/components/ui/sonner'
 
 const viewContent = {
-  tutor: {
-    title: 'Interaktywny Tutor AI',
-    description: 'Zadaj pytanie i ucz się krok po kroku',
-    emoji: '🎓',
-  },
   mentor: {
     title: 'Prowadzenie Sekwencyjne',
     description: 'Sekwencyjne prowadzenie przez materiał — jak na wykładzie',
@@ -29,23 +26,28 @@ const viewContent = {
 function App() {
   const [activeView, setActiveView] = useState<ViewType>('tutor')
 
-  const currentView = viewContent[activeView]
-
   return (
     <div className="min-h-screen gradient-bg">
       <Navigation activeView={activeView} onViewChange={setActiveView} />
       
       <main className="max-w-[1200px] mx-auto px-6 md:px-8 py-8 md:py-12">
         <AnimatePresence mode="wait">
-          <ViewWrapper key={activeView} viewId={activeView}>
-            <PlaceholderView
-              title={currentView.title}
-              description={currentView.description}
-              emoji={currentView.emoji}
-            />
-          </ViewWrapper>
+          {activeView === 'tutor' ? (
+            <ViewWrapper key="tutor" viewId="tutor">
+              <TutorView />
+            </ViewWrapper>
+          ) : (
+            <ViewWrapper key={activeView} viewId={activeView}>
+              <PlaceholderView
+                title={viewContent[activeView].title}
+                description={viewContent[activeView].description}
+                emoji={viewContent[activeView].emoji}
+              />
+            </ViewWrapper>
+          )}
         </AnimatePresence>
       </main>
+      <Toaster />
     </div>
   )
 }

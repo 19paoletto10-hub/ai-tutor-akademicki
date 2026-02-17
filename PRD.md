@@ -26,19 +26,40 @@ This is a multi-view educational application with view switching, configuration 
 - **Progression**: Page loads → Header renders at top → User scrolls → Header remains visible with blur effect → Always accessible
 - **Success criteria**: Header stays visible during scroll, backdrop blur creates depth, no performance issues with blur effect
 
-### Placeholder View Cards
-- **Functionality**: Each view displays a descriptive card explaining its future purpose
-- **Purpose**: Establishes UI patterns and demonstrates the navigation framework
-- **Trigger**: View becomes active through navigation
-- **Progression**: View activates → Card scales in subtly → Content displays with description → User reads purpose
-- **Success criteria**: Cards have consistent styling, scale-in animation feels polished, content is clearly readable
+### AI Tutor Chat Interface
+- **Functionality**: Full-featured chat interface with AI-powered academic tutoring using GPT-4
+- **Purpose**: Provides interactive Q&A learning experience with step-by-step explanations
+- **Trigger**: User types question and presses Enter or clicks send button
+- **Progression**: User enters question → Message appears in chat → AI typing indicator shows → AI response appears with markdown formatting → Conversation history persists → User can continue conversation
+- **Success criteria**: Messages save to browser storage, markdown renders correctly, typing indicator provides feedback, auto-scroll to new messages, conversation maintains context
 
-### Responsive Layout Adaptation
-- **Functionality**: Layout adapts from desktop (max-width 1200px centered) to mobile (single column)
-- **Purpose**: Ensures usability across all device sizes
+### Chat Message Display
+- **Functionality**: Differentiated message bubbles for user and AI with markdown rendering
+- **Purpose**: Clear visual distinction between participants and rich content formatting
+- **Trigger**: Message sent or received
+- **Progression**: Message data received → Markdown parsed → HTML rendered → Animated entrance → Timestamp displayed
+- **Success criteria**: User messages show gradient background, AI messages show avatar and label, code blocks have syntax highlighting, tables render properly, timestamps show relative time in Polish
+
+### Quick Prompt Suggestions
+- **Functionality**: Sidebar with pre-written example questions
+- **Purpose**: Help users get started and demonstrate chat capabilities
+- **Trigger**: User clicks on suggestion button
+- **Progression**: User clicks suggestion → Text auto-fills and sends → AI responds → User sees example interaction
+- **Success criteria**: Prompts are contextually relevant, clicking sends immediately, suggestions are helpful for new users
+
+### Conversation Persistence
+- **Functionality**: Local browser storage of chat history using useKV hook
+- **Purpose**: Maintain conversation context across sessions
+- **Trigger**: Automatic on message send/receive
+- **Progression**: Message created → Saved to browser storage → Available on page reload → Can be cleared by user
+- **Success criteria**: History persists across page reloads, clear function removes all messages, no data sent to external services
+
+### Responsive Chat Layout
+- **Functionality**: Chat area and sidebar adapt to screen size (70/30 split on desktop, stacked on mobile)
+- **Purpose**: Optimal layout for different device sizes
 - **Trigger**: Viewport width changes
-- **Progression**: User resizes window → Layout responds → Navigation adapts → Content reflows → Maintains readability
-- **Success criteria**: No horizontal scroll on mobile, touch-friendly navigation on small screens, content remains readable at all sizes
+- **Progression**: Layout detects screen size → Adjusts chat/sidebar positioning → Maintains usability
+- **Success criteria**: Sidebar stacks below chat on mobile, message bubbles adapt width, input area remains accessible, scrolling works smoothly
 
 ## Edge Case Handling
 
