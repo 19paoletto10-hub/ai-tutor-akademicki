@@ -397,8 +397,8 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)]">
-      <div className="flex-1 lg:w-[70%] flex flex-col min-h-0">
+    <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-8rem)]">
+      <div className="flex-1 lg:w-[80%] xl:w-[75%] flex flex-col min-h-0">
         <Card className="flex-1 bg-card/60 backdrop-blur-sm border-border/50 shadow-xl flex flex-col overflow-hidden min-h-0">
           <div
             ref={scrollContainerRef}
@@ -474,14 +474,14 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
             </div>
           )}
 
-          <div className="border-t border-border/50 p-4 md:p-6 bg-muted/20 shrink-0">
+          <div className="border-t border-border/50 p-3 md:p-4 lg:p-5 bg-muted/20 shrink-0">
             {getKnowledgeBaseSummary(materials) && (
               <div className="mb-3 text-sm text-emerald-400 flex items-center gap-2">
                 <span>📚</span>
                 <span>{getKnowledgeBaseSummary(materials)}</span>
               </div>
             )}
-            <div className="flex gap-3">
+            <div className="flex gap-2 md:gap-3">
               <Textarea
                 ref={textareaRef}
                 value={input}
@@ -489,16 +489,17 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
                 onKeyDown={handleKeyDown}
                 placeholder="Zadaj pytanie..."
                 disabled={isGenerating}
-                className="min-h-[60px] max-h-[200px] resize-none bg-background/50 border-border/50 focus:border-ring"
+                className="min-h-[56px] md:min-h-[60px] max-h-[200px] resize-none bg-background/50 border-border/50 focus:border-ring text-sm md:text-base"
                 rows={2}
               />
               <Button
                 onClick={() => handleSend()}
                 disabled={!input.trim() || isGenerating}
                 size="icon"
-                className="h-[60px] w-[60px] bg-gradient-to-br from-primary via-secondary to-accent hover:opacity-90 transition-opacity shrink-0"
+                className="h-[56px] w-[56px] md:h-[60px] md:w-[60px] bg-gradient-to-br from-primary via-secondary to-accent hover:opacity-90 transition-opacity shrink-0"
               >
-                <PaperPlaneTilt size={24} weight="fill" />
+                <PaperPlaneTilt size={20} weight="fill" className="md:hidden" />
+                <PaperPlaneTilt size={24} weight="fill" className="hidden md:block" />
               </Button>
             </div>
           </div>

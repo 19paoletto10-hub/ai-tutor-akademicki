@@ -64,10 +64,10 @@ export function TutorSidebar({ onSendPrompt, onClearChat, messages }: TutorSideb
   }
 
   return (
-    <aside className="lg:w-[30%] space-y-4">
+    <aside className="lg:w-[20%] xl:w-[25%] space-y-4 hidden lg:block overflow-y-auto max-h-[calc(100vh-8rem)]">
       <StudentProfileCard />
       
-      <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-xl p-6">
+      <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-xl p-4 lg:p-5">
         <div className="space-y-4">
           <div>
             <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">

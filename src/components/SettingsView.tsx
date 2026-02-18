@@ -308,10 +308,10 @@ export function SettingsView() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="w-full"
+      className="w-full max-h-[calc(100vh-8rem)] overflow-y-auto"
     >
       <Card className="bg-card/40 border-white/10 backdrop-blur-sm p-8 md:p-10">
-        <div className="space-y-8">
+        <div className="space-y-8 pb-8">
           <div>
             <h2 className="text-3xl font-bold mb-2 gradient-text">Ustawienia</h2>
             <p className="text-muted-foreground">

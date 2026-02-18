@@ -342,8 +342,8 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)]">
-      <div className="flex-1 lg:w-[70%] flex flex-col min-h-0">
+    <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-8rem)]">
+      <div className="flex-1 lg:w-[80%] xl:w-[75%] flex flex-col min-h-0">
         {currentTopicName && (
           <Badge className="mb-3 bg-emerald-500/20 text-emerald-300 border-emerald-500/30 px-4 py-2 w-fit shrink-0">
             📖 Aktualny temat: {currentTopicName}
@@ -409,14 +409,14 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
             </div>
           )}
 
-          <div className="border-t border-border/50 p-4 md:p-6 bg-muted/20 shrink-0">
+          <div className="border-t border-border/50 p-3 md:p-4 lg:p-5 bg-muted/20 shrink-0">
             {getKnowledgeBaseSummary(materials) && (
               <div className="mb-3 text-sm text-emerald-400 flex items-center gap-2">
                 <span>📚</span>
                 <span>{getKnowledgeBaseSummary(materials)}</span>
               </div>
             )}
-            <div className="flex gap-3">
+            <div className="flex gap-2 md:gap-3">
               <Textarea
                 ref={textareaRef}
                 value={input}
@@ -424,16 +424,17 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
                 onKeyDown={handleKeyDown}
                 placeholder="Wpisz temat lub wybierz opcję..."
                 disabled={isGenerating}
-                className="min-h-[60px] max-h-[200px] resize-none bg-background/50 border-border/50 focus:border-emerald-500"
+                className="min-h-[56px] md:min-h-[60px] max-h-[200px] resize-none bg-background/50 border-border/50 focus:border-emerald-500 text-sm md:text-base"
                 rows={2}
               />
               <Button
                 onClick={() => handleSend()}
                 disabled={!input.trim() || isGenerating}
                 size="icon"
-                className="h-[60px] w-[60px] bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-400 hover:opacity-90 transition-opacity shrink-0"
+                className="h-[56px] w-[56px] md:h-[60px] md:w-[60px] bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-400 hover:opacity-90 transition-opacity shrink-0"
               >
-                <PaperPlaneTilt size={24} weight="fill" />
+                <PaperPlaneTilt size={20} weight="fill" className="md:hidden" />
+                <PaperPlaneTilt size={24} weight="fill" className="hidden md:block" />
               </Button>
             </div>
           </div>
