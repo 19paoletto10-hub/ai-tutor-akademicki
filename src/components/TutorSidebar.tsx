@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Lightbulb, Trash, DownloadSimple } from '@phosphor-icons/react'
+import { Lightbulb, Trash, DownloadSimple, List } from '@phosphor-icons/react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +13,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { StudentProfileCard } from '@/components/StudentProfileCard'
 import type { Message } from '@/components/TutorView'
 
@@ -63,9 +70,15 @@ export function TutorSidebar({ onSendPrompt, onClearChat, messages }: TutorSideb
     URL.revokeObjectURL(url)
   }
 
-  return (
-    <aside className="lg:w-[20%] xl:w-[25%] space-y-4 hidden lg:block overflow-y-auto max-h-[calc(100vh-8rem)]">
-      <StudentProfileCard />
+  const SidebarContent = () => (
+    <div className="space-y-4">
+      <div className="lg:hidden">
+        <StudentProfileCard />
+      </div>
+      
+      <div className="hidden lg:block">
+        <StudentProfileCard />
+      </div>
       
       <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-xl p-4 lg:p-5">
         <div className="space-y-4">
@@ -132,6 +145,35 @@ export function TutorSidebar({ onSendPrompt, onClearChat, messages }: TutorSideb
           </div>
         </div>
       </Card>
+    </div>
+  )
+
+  return (
+    <>
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="lg:hidden fixed bottom-4 right-4 z-50 h-14 w-14 rounded-full shadow-lg bg-gradient-to-br from-primary via-secondary to-accent hover:opacity-90 border-0"
+            aria-label="Otwórz menu boczne"
+          >
+            <List size={24} className="text-primary-foreground" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-[85vw] sm:w-[400px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Panel Tutora</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            <SidebarContent />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <aside className="lg:w-[20%] xl:w-[25%] space-y-4 hidden lg:block overflow-y-auto max-h-[calc(100vh-8rem)]">
+        <SidebarContent />
+      </aside>
 
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
         <AlertDialogContent>
@@ -149,6 +191,6 @@ export function TutorSidebar({ onSendPrompt, onClearChat, messages }: TutorSideb
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </aside>
+    </>
   )
 }

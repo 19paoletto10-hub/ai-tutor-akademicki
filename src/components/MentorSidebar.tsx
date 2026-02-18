@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { Trash, DownloadSimple, Target } from '@phosphor-icons/react'
+import { Trash, DownloadSimple, Target, List } from '@phosphor-icons/react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +14,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { CurriculumPanel } from '@/components/CurriculumPanel'
 import type { Message } from '@/components/MentorView'
 
@@ -61,8 +68,8 @@ export function MentorSidebar({ onSendPrompt, onClearChat, messages, discussedTo
 
   const totalTopicsDiscussed = discussedTopics.length
 
-  return (
-    <aside className="lg:w-[20%] xl:w-[25%] space-y-4 hidden lg:block overflow-y-auto max-h-[calc(100vh-8rem)]">
+  const SidebarContent = () => (
+    <div className="space-y-4">
       <CurriculumPanel onTopicClick={onSendPrompt} />
 
       <Card className="bg-card/60 backdrop-blur-sm border-border/50 shadow-xl p-4 lg:p-5">
@@ -154,6 +161,35 @@ export function MentorSidebar({ onSendPrompt, onClearChat, messages, discussedTo
           </div>
         </div>
       </Card>
+    </div>
+  )
+
+  return (
+    <>
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="lg:hidden fixed bottom-4 right-4 z-50 h-14 w-14 rounded-full shadow-lg bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-400 hover:opacity-90 border-0"
+            aria-label="Otwórz menu boczne"
+          >
+            <List size={24} className="text-white" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-[85vw] sm:w-[400px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Panel Mentora</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            <SidebarContent />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <aside className="lg:w-[20%] xl:w-[25%] space-y-4 hidden lg:block overflow-y-auto max-h-[calc(100vh-8rem)]">
+        <SidebarContent />
+      </aside>
 
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
         <AlertDialogContent>
@@ -171,6 +207,6 @@ export function MentorSidebar({ onSendPrompt, onClearChat, messages, discussedTo
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </aside>
+    </>
   )
 }
