@@ -7,10 +7,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FloppyDisk, ArrowClockwise, Sparkle } from '@phosphor-icons/react'
+import { FloppyDisk, ArrowClockwise, Sparkle, MagicWand } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { FileUploadSection } from '@/components/FileUploadSection'
 import { generateCurriculumFromMaterials } from '@/lib/curriculum-generator'
+import { generateCourseNameAndDescription } from '@/lib/course-generator'
 
 interface CourseConfig {
   courseName: string
@@ -103,6 +104,7 @@ export function SettingsView() {
   const [curriculum, setCurriculum] = useState('')
   const [curriculumCount, setCurriculumCount] = useState(0)
   const [isGeneratingCurriculum, setIsGeneratingCurriculum] = useState(false)
+  const [isGeneratingCourse, setIsGeneratingCourse] = useState(false)
 
   useEffect(() => {
     const savedCourse = localStorage.getItem('course_config')
@@ -302,6 +304,35 @@ export function SettingsView() {
     }
   }
 
+  const handleGenerateCourseInfo = async () => {
+    setIsGeneratingCourse(true)
+    
+    try {
+      const { courseName: generatedName, courseDescription: generatedDesc } = 
+        await generateCourseNameAndDescription()
+      
+      setCourseName(generatedName)
+      setCourseDescription(generatedDesc)
+      setCharCount(generatedDesc.length)
+      
+      const config: CourseConfig = {
+        courseName: generatedName,
+        courseDescription: generatedDesc
+      }
+      localStorage.setItem('course_config', JSON.stringify(config))
+      
+      toast.success('Nazwa i opis kursu wygenerowane!', {
+        description: 'AI przeanalizowało przesłane materiały i utworzyło konfigurację kursu.'
+      })
+    } catch (error: any) {
+      toast.error('Błąd generowania', {
+        description: error.message || 'Nie udało się wygenerować nazwy i opisu kursu.'
+      })
+    } finally {
+      setIsGeneratingCourse(false)
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -323,9 +354,38 @@ export function SettingsView() {
             <FileUploadSection />
 
             <div className="space-y-4 pb-8 border-b border-white/10">
-              <h3 className="text-xl font-semibold flex items-center gap-2">
-                🎯 Temat kursu
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold flex items-center gap-2">
+                  🎯 Temat kursu
+                </h3>
+                <Button
+                  onClick={handleGenerateCourseInfo}
+                  disabled={isGeneratingCourse}
+                  variant="outline"
+                  size="sm"
+                  className="border-accent/30 hover:bg-accent/10 text-accent hover:text-accent"
+                >
+                  {isGeneratingCourse ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                      Generowanie...
+                    </>
+                  ) : (
+                    <>
+                      <MagicWand className="mr-2" />
+                      ✨ Wygeneruj z plików
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {isGeneratingCourse && (
+                <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+                  <p className="text-sm text-accent-foreground">
+                    🤖 AI analizuje przesłane materiały kursowe, aby wygenerować nazwę i opis kursu...
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="course-name" className="text-sm font-medium">
@@ -337,6 +397,7 @@ export function SettingsView() {
                   onChange={(e) => setCourseName(e.target.value)}
                   placeholder="np. Biologia molekularna, Historia średniowiecza, Programowanie w Python..."
                   className="bg-background/50 border-white/10 focus:border-primary"
+                  disabled={isGeneratingCourse}
                 />
               </div>
 
@@ -351,6 +412,7 @@ export function SettingsView() {
                   placeholder="Opisz zakres kursu, kluczowe tematy i pojęcia, które tutor powinien znać..."
                   rows={8}
                   className="bg-background/50 border-white/10 focus:border-primary resize-none"
+                  disabled={isGeneratingCourse}
                 />
                 <div className="flex justify-end">
                   <span
@@ -367,6 +429,7 @@ export function SettingsView() {
 
               <Button
                 onClick={handleSaveCourse}
+                disabled={isGeneratingCourse}
                 className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
               >
                 <FloppyDisk className="mr-2" />
