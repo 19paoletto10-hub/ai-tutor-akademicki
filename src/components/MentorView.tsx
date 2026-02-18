@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { MentorMessage } from '@/components/MentorMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { MentorSidebar } from '@/components/MentorSidebar'
-import { trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig, getCurriculumTopics, injectKnowledgeBase } from '@/lib/storage'
+import { trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig, getCurriculumTopics, injectKnowledgeBase, splitLongMessage } from '@/lib/storage'
 import { useUploadedMaterials, getKnowledgeBaseSummary } from '@/hooks/use-uploaded-materials'
 import { validateMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
@@ -33,6 +33,10 @@ export interface Message {
   validationBlock?: {
     type: 'anti-cheating' | 'off-topic'
     message: string
+  }
+  partInfo?: {
+    partNumber: number
+    totalParts: number
   }
 }
 
@@ -222,14 +226,29 @@ Odpowiedz na ostatnie pytanie studenta w sposób akademicki i sekwencyjny. Użyj
 
       const response = await window.spark.llm(promptText, 'gpt-4o')
 
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: response,
-        timestamp: Date.now(),
+      const messageParts = splitLongMessage(response)
+      
+      if (messageParts.length === 1) {
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: response,
+          timestamp: Date.now(),
+        }
+        setMessages((current) => [...current, assistantMessage])
+      } else {
+        const newMessages: Message[] = messageParts.map((part, index) => ({
+          id: `assistant-${Date.now()}-part-${index}`,
+          role: 'assistant',
+          content: part,
+          timestamp: Date.now() + index,
+          partInfo: {
+            partNumber: index + 1,
+            totalParts: messageParts.length
+          }
+        }))
+        setMessages((current) => [...current, ...newMessages])
       }
-
-      setMessages((current) => [...current, assistantMessage])
 
       const topicMatch = response.match(/\*\*\[TEMAT\]:\s*(.+?)\*\*/i)
       if (topicMatch && topicMatch[1]) {

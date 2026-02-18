@@ -8,7 +8,7 @@ import { ChatMessage } from '@/components/ChatMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { TutorSidebar } from '@/components/TutorSidebar'
 import { useStudentProfile } from '@/hooks/use-student-profile'
-import { trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction, injectKnowledgeBase } from '@/lib/storage'
+import { trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction, injectKnowledgeBase, splitLongMessage } from '@/lib/storage'
 import { useUploadedMaterials, getKnowledgeBaseSummary } from '@/hooks/use-uploaded-materials'
 import { QuizEvaluation } from '@/components/QuizEvaluationCard'
 import { validateMessage, isVagueMessage, augmentContextualMessage } from '@/lib/validators'
@@ -27,6 +27,10 @@ export interface Message {
     message: string
   }
   isVagueSuggestion?: boolean
+  partInfo?: {
+    partNumber: number
+    totalParts: number
+  }
 }
 
 const DEFAULT_SYSTEM_PROMPT = `Jesteś profesjonalnym tutorem akademickim. Twoim zadaniem jest AKTYWNIE uczyć i prowadzić studenta krok po kroku przez materiał kursowy.
@@ -308,15 +312,31 @@ Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj 
 
       const response = await window.spark.llm(promptText, 'gpt-4o')
 
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: response,
-        timestamp: Date.now(),
-        isQuizQuestion: response.includes('Mini-sprawdzenie'),
+      const messageParts = splitLongMessage(response)
+      
+      if (messageParts.length === 1) {
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: response,
+          timestamp: Date.now(),
+          isQuizQuestion: response.includes('Mini-sprawdzenie'),
+        }
+        setMessages((current) => [...current, assistantMessage])
+      } else {
+        const newMessages: Message[] = messageParts.map((part, index) => ({
+          id: `assistant-${Date.now()}-part-${index}`,
+          role: 'assistant',
+          content: part,
+          timestamp: Date.now() + index,
+          isQuizQuestion: index === messageParts.length - 1 && response.includes('Mini-sprawdzenie'),
+          partInfo: {
+            partNumber: index + 1,
+            totalParts: messageParts.length
+          }
+        }))
+        setMessages((current) => [...current, ...newMessages])
       }
-
-      setMessages((current) => [...current, assistantMessage])
     } catch (error) {
       console.error('Error generating response:', error)
       const errorMessage: Message = {

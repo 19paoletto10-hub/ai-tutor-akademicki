@@ -1,6 +1,51 @@
 import { toast } from 'sonner'
 
 const MAX_MESSAGES = 50
+const MAX_MESSAGE_LENGTH = 10000
+
+export function splitLongMessage(content: string, maxLength: number = MAX_MESSAGE_LENGTH): string[] {
+  if (content.length <= maxLength) {
+    return [content]
+  }
+
+  const parts: string[] = []
+  const paragraphs = content.split('\n\n')
+  let currentPart = ''
+
+  for (const paragraph of paragraphs) {
+    if (currentPart.length + paragraph.length + 2 <= maxLength) {
+      currentPart += (currentPart ? '\n\n' : '') + paragraph
+    } else {
+      if (currentPart) {
+        parts.push(currentPart)
+      }
+      
+      if (paragraph.length > maxLength) {
+        const sentences = paragraph.split(/(?<=[.!?])\s+/)
+        currentPart = ''
+        
+        for (const sentence of sentences) {
+          if (currentPart.length + sentence.length + 1 <= maxLength) {
+            currentPart += (currentPart ? ' ' : '') + sentence
+          } else {
+            if (currentPart) {
+              parts.push(currentPart)
+            }
+            currentPart = sentence
+          }
+        }
+      } else {
+        currentPart = paragraph
+      }
+    }
+  }
+
+  if (currentPart) {
+    parts.push(currentPart)
+  }
+
+  return parts.length > 0 ? parts : [content]
+}
 
 export function trimMessagesToLimit<T>(messages: T[], limit: number = MAX_MESSAGES): T[] {
   if (messages.length <= limit) {

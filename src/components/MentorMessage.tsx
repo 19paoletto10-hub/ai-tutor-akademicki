@@ -81,6 +81,11 @@ export function MentorMessage({ message, onOptionClick }: MentorMessageProps) {
           <div className="flex items-center gap-2 px-1">
             <span className="text-lg">👨‍🏫</span>
             <span className="text-xs font-medium text-muted-foreground">{mentorName}</span>
+            {message.partInfo && (
+              <span className="text-xs text-emerald-400/70 ml-auto">
+                Część {message.partInfo.partNumber}/{message.partInfo.totalParts}
+              </span>
+            )}
           </div>
         )}
         

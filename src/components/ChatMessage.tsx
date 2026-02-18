@@ -51,6 +51,11 @@ export function ChatMessage({ message, showActionButtons = false, onAction, isGe
           <div className="flex items-center gap-2 px-1">
             <span className="text-lg">🎓</span>
             <span className="text-xs font-medium text-muted-foreground">Tutor</span>
+            {message.partInfo && (
+              <span className="text-xs text-accent/70 ml-auto">
+                Część {message.partInfo.partNumber}/{message.partInfo.totalParts}
+              </span>
+            )}
           </div>
         )}
         
