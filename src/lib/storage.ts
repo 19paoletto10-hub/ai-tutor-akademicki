@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 
 const MAX_MESSAGES = 50
-const MAX_MESSAGE_LENGTH = 10000
+const MAX_MESSAGE_LENGTH = 8000
 
 export function splitLongMessage(content: string, maxLength: number = MAX_MESSAGE_LENGTH): string[] {
   if (content.length <= maxLength) {
@@ -13,25 +13,57 @@ export function splitLongMessage(content: string, maxLength: number = MAX_MESSAG
   let currentPart = ''
 
   for (const paragraph of paragraphs) {
-    if (currentPart.length + paragraph.length + 2 <= maxLength) {
-      currentPart += (currentPart ? '\n\n' : '') + paragraph
+    const separator = currentPart ? '\n\n' : ''
+    const combinedLength = currentPart.length + separator.length + paragraph.length
+    
+    if (combinedLength <= maxLength) {
+      currentPart += separator + paragraph
     } else {
       if (currentPart) {
         parts.push(currentPart)
+        currentPart = ''
       }
       
       if (paragraph.length > maxLength) {
         const sentences = paragraph.split(/(?<=[.!?])\s+/)
-        currentPart = ''
         
         for (const sentence of sentences) {
-          if (currentPart.length + sentence.length + 1 <= maxLength) {
-            currentPart += (currentPart ? ' ' : '') + sentence
+          const sentenceSeparator = currentPart ? ' ' : ''
+          
+          if (currentPart.length + sentenceSeparator.length + sentence.length <= maxLength) {
+            currentPart += sentenceSeparator + sentence
           } else {
             if (currentPart) {
               parts.push(currentPart)
+              currentPart = ''
             }
-            currentPart = sentence
+            
+            if (sentence.length > maxLength) {
+              const words = sentence.split(/\s+/)
+              
+              for (const word of words) {
+                const wordSeparator = currentPart ? ' ' : ''
+                
+                if (currentPart.length + wordSeparator.length + word.length <= maxLength) {
+                  currentPart += wordSeparator + word
+                } else {
+                  if (currentPart) {
+                    parts.push(currentPart)
+                  }
+                  
+                  if (word.length > maxLength) {
+                    for (let i = 0; i < word.length; i += maxLength) {
+                      parts.push(word.substring(i, i + maxLength))
+                    }
+                    currentPart = ''
+                  } else {
+                    currentPart = word
+                  }
+                }
+              }
+            } else {
+              currentPart = sentence
+            }
           }
         }
       } else {
