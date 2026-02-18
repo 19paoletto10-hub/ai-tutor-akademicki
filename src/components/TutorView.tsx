@@ -109,6 +109,7 @@ export function TutorView() {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [showScrollButton, setShowScrollButton] = useState(false)
+  const evaluatedQuizAttemptsRef = useRef(new Set<string>())
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior })
@@ -262,8 +263,24 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
 
     try {
       if (isAnswerToQuiz && previousMessage) {
+        const attemptId = `${previousMessage.id}::${textToSend}`
+        
+        if (evaluatedQuizAttemptsRef.current.has(attemptId)) {
+          setIsGenerating(false)
+          return
+        }
+        
+        evaluatedQuizAttemptsRef.current.add(attemptId)
+        
         const quizQuestion = extractQuizQuestion(previousMessage.content)
-        const evaluation = await evaluateQuizAnswer(quizQuestion, textToSend)
+        let evaluation: QuizEvaluation | null = null
+        
+        try {
+          evaluation = await evaluateQuizAnswer(quizQuestion, textToSend)
+        } catch (error) {
+          evaluatedQuizAttemptsRef.current.delete(attemptId)
+          throw error
+        }
         
         if (evaluation) {
           addQuizGrade(evaluation.grade)
