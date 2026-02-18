@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 
 const MAX_MESSAGES = 50
-const MAX_MESSAGE_LENGTH = 15000
+const MAX_MESSAGE_LENGTH = 8000
 
 export function splitLongMessage(content: string, maxLength: number = MAX_MESSAGE_LENGTH): string[] {
   if (content.length <= maxLength) {
@@ -18,41 +18,62 @@ export function splitLongMessage(content: string, maxLength: number = MAX_MESSAG
     }
     
     let splitIndex = maxLength
+    const searchWindow = remainingContent.substring(0, maxLength)
     
-    const paragraphBreak = remainingContent.lastIndexOf('\n\n', maxLength)
-    if (paragraphBreak > maxLength * 0.5) {
-      splitIndex = paragraphBreak + 2
-    } else {
-      const sentenceBreak = remainingContent.substring(0, maxLength).match(/[.!?]\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ])/g)
-      if (sentenceBreak) {
-        const lastSentence = remainingContent.substring(0, maxLength).lastIndexOf(sentenceBreak[sentenceBreak.length - 1])
-        if (lastSentence > maxLength * 0.3) {
-          splitIndex = lastSentence + sentenceBreak[sentenceBreak.length - 1].length
-        } else {
-          const newlineBreak = remainingContent.lastIndexOf('\n', maxLength)
-          if (newlineBreak > maxLength * 0.3) {
-            splitIndex = newlineBreak + 1
-          } else {
-            const spaceBreak = remainingContent.lastIndexOf(' ', maxLength)
-            if (spaceBreak > maxLength * 0.2) {
-              splitIndex = spaceBreak + 1
-            }
-          }
-        }
-      } else {
-        const newlineBreak = remainingContent.lastIndexOf('\n', maxLength)
-        if (newlineBreak > maxLength * 0.3) {
-          splitIndex = newlineBreak + 1
-        } else {
-          const spaceBreak = remainingContent.lastIndexOf(' ', maxLength)
-          if (spaceBreak > maxLength * 0.2) {
-            splitIndex = spaceBreak + 1
+    const markdownSectionBreak = searchWindow.match(/\n#{1,3}\s+[^\n]+\n/g)
+    if (markdownSectionBreak && markdownSectionBreak.length > 0) {
+      const lastSectionIndex = remainingContent.lastIndexOf(markdownSectionBreak[markdownSectionBreak.length - 1], maxLength)
+      if (lastSectionIndex > maxLength * 0.4) {
+        splitIndex = lastSectionIndex
+      }
+    }
+    
+    if (splitIndex === maxLength) {
+      const paragraphBreak = remainingContent.lastIndexOf('\n\n', maxLength)
+      if (paragraphBreak > maxLength * 0.4) {
+        splitIndex = paragraphBreak + 2
+      }
+    }
+    
+    if (splitIndex === maxLength) {
+      const sentencePatterns = [
+        /\.\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ])/g,
+        /\.\s*\n/g,
+        /\.\s*$/g,
+        /[!?]\s+/g
+      ]
+      
+      for (const pattern of sentencePatterns) {
+        const matches = Array.from(searchWindow.matchAll(pattern))
+        if (matches.length > 0) {
+          const lastMatch = matches[matches.length - 1]
+          const matchIndex = lastMatch.index! + lastMatch[0].length
+          if (matchIndex > maxLength * 0.3) {
+            splitIndex = matchIndex
+            break
           }
         }
       }
     }
     
-    parts.push(remainingContent.substring(0, splitIndex).trim())
+    if (splitIndex === maxLength) {
+      const newlineBreak = remainingContent.lastIndexOf('\n', maxLength)
+      if (newlineBreak > maxLength * 0.2) {
+        splitIndex = newlineBreak + 1
+      }
+    }
+    
+    if (splitIndex === maxLength) {
+      const spaceBreak = remainingContent.lastIndexOf(' ', maxLength)
+      if (spaceBreak > maxLength * 0.2) {
+        splitIndex = spaceBreak + 1
+      }
+    }
+    
+    const part = remainingContent.substring(0, splitIndex).trim()
+    if (part.length > 0) {
+      parts.push(part)
+    }
     remainingContent = remainingContent.substring(splitIndex).trim()
   }
 
