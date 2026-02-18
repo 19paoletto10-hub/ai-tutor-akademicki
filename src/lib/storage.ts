@@ -277,8 +277,15 @@ Poniżej znajdują się fragmenty materiałów kursowych przesłanych przez stud
     }
   })
   
-  if (userMessage && allChunks.length > 0) {
-    allChunks.sort((a, b) => b.relevanceScore - a.relevanceScore)
+  // Always sort: relevant chunks first, then by original order within same score
+  // This ensures the most important content fits within the token budget
+  if (allChunks.length > 0) {
+    allChunks.sort((a, b) => {
+      // Primary: higher relevance first
+      if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore
+      // Secondary: maintain original order for same-score chunks
+      return 0
+    })
   }
   
   const maxChars = 80000

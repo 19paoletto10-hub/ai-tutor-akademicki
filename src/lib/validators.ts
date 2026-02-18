@@ -1,4 +1,5 @@
 import { getCourseConfig } from './storage'
+import { llmSimple } from './llm'
 
 const ANTI_CHEATING_PATTERNS = [
   /zrób\s+mi\s+(całe|cały|pełne)\s+(rozwiązanie|rozwiazanie)/i,
@@ -127,7 +128,7 @@ Odpowiedz TYLKO liczbą 0.0-1.0:
 
 Bądź BARDZO liberalny — przepuszczaj wszystkie wątpliwe przypadki.`
 
-    const response = await spark.llm(validationPrompt, 'gpt-4o-mini')
+    const response = await llmSimple(validationPrompt, 'gpt-4o-mini', { maxTokens: 50 })
     const score = parseFloat(response.trim())
     
     if (isNaN(score)) {

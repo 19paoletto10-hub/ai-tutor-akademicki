@@ -14,6 +14,8 @@ import { QuizEvaluation } from '@/components/QuizEvaluationCard'
 import { validateMessage, isVagueMessage, augmentContextualMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
 import { VagueSuggestionCard } from '@/components/VagueSuggestionCard'
+import { llm, llmSimple, getErrorMessage, LlmError } from '@/lib/llm'
+import { toast } from 'sonner'
 
 export interface Message {
   id: string
@@ -33,6 +35,8 @@ export interface Message {
   }
 }
 
+const PROMPT_HISTORY_LIMIT = 10
+
 const DEFAULT_SYSTEM_PROMPT = `Jesteś profesjonalnym tutorem akademickim. Twoim zadaniem jest AKTYWNIE uczyć i prowadzić studenta krok po kroku przez materiał kursowy.
 
 WAŻNA ZASADA — GATING PEWNOŚCI:
@@ -48,10 +52,17 @@ Jeśli student pisze krótką odpowiedź jak "A", "1", "tak", "kontynuuj" — od
 
 TRYB AKTYWNEGO PROWADZENIA:
 Gdy student wybiera temat lub zadaje pytanie, TY przejmij inicjatywę:
-1. Wyjaśnij temat według schematu: definicja → intuicja → przykład
+1. Wyjaśnij temat zwięźle: definicja → kluczowe wyjaśnienie
 2. Podaj źródła jeśli je znasz
+3. Na końcu zaproponuj: "Chcesz, żebym rozwinął przykłady, szczegóły lub podał więcej źródeł?"
 
 WAŻNE: NIE dodawaj sekcji "Mini-sprawdzenie" ani quizu automatycznie - student sam zdecyduje kiedy chce quiz (przez przycisk).
+
+STYL ODPOWIEDZI:
+- Odpowiadaj ZWIĘŹLE i KONKRETNIE — podaj esencję tematu, nie rozwlekaj.
+- Student może poprosić o rozwinięcie w kolejnych wiadomościach.
+- ZAWSZE kończ myśl — NIGDY nie urywaj odpowiedzi w połowie zdania.
+- Jeśli temat jest obszerny, podaj zwięzłe wyjaśnienie i zaproponuj rozwinięcie.
 
 Zasady:
 - Jeśli student prosi o gotowe rozwiązanie zadania/kolokwium, odmów i zaproponuj wskazówki oraz wyjaśnienie metody.
@@ -59,13 +70,15 @@ Zasady:
 
 FORMAT ODPOWIEDZI:
 1) **Wyjaśnienie**
-[Twoje wyjaśnienie tematu - definicja, intuicja, przykład]
+[Zwięzłe wyjaśnienie tematu — definicja i kluczowa intuicja]
 
 2) **Krok po kroku**
-[Opcjonalnie - jeśli dotyczy procedur/obliczeń]
+[Opcjonalnie — jeśli dotyczy procedur/obliczeń]
 
 3) **Źródła**
-[Jeśli znasz źródła, podaj je. Jeśli nie — napisz "Odpowiedź na podstawie wiedzy ogólnej."]
+[Jeśli znasz źródła, podaj je. Jeśli nie — "Odpowiedź na podstawie wiedzy ogólnej."]
+
+4) Zaproponuj: "Chcesz, żebym rozwinął [konkretny aspekt]?"
 
 Jeśli nie znasz odpowiedzi — powiedz wprost, nie wymyślaj.`
 
@@ -162,7 +175,7 @@ UZASADNIENIE: [1-2 zdania]
 POPRAWNA ODPOWIEDŹ: [podaj poprawną odpowiedź]
 WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
 
-      const response = await window.spark.llm(promptText, 'gpt-4o')
+      const response = await llmSimple(promptText, 'gpt-4o', { maxTokens: 800 })
       
       const gradeMatch = response.match(/OCENA:\s*(\d)/)
       const justificationMatch = response.match(/UZASADNIENIE:\s*(.+?)(?=\n|POPRAWNA|$)/s)
@@ -184,6 +197,7 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
       }
     } catch (error) {
       console.error('Error evaluating quiz answer:', error)
+      toast.error('Nie udało się ocenić odpowiedzi. Spróbuj ponownie.')
       return null
     }
   }
@@ -288,8 +302,11 @@ Ostatnie błędy: ${profile.last_mistakes.length > 0 ? profile.last_mistakes.joi
 [PYTANIE STUDENTA]
 ${textToSend}`
 
-      const conversationHistory = [...messages, userMessage]
+      const recentMessages = [...messages, userMessage]
         .filter(msg => !msg.quizEvaluation)
+        .slice(-PROMPT_HISTORY_LIMIT)
+      
+      const conversationHistory = recentMessages
         .map((msg) => `${msg.role === 'user' ? 'Student' : 'Tutor'}: ${msg.content}`)
         .join('\n\n')
 
@@ -305,12 +322,19 @@ FORMAT (DOKŁADNIE):
 
       const promptText = `${injectKnowledgeBase(injectCourseContext(systemPrompt), textToSend)}
 
-Historia rozmowy:
+Historia rozmowy (ostatnie ${PROMPT_HISTORY_LIMIT} wiadomości):
 ${conversationHistory}
 
-Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj markdown do formatowania odpowiedzi. Uwzględnij profil studenta w swojej odpowiedzi - dostosuj poziom wyjaśnień do jego poziomu, zwróć szczególną uwagę na słabe tematy jeśli są powiązane z pytaniem.`
+Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj markdown do formatowania odpowiedzi. Uwzględnij profil studenta w swojej odpowiedzi - dostosuj poziom wyjaśnień do jego poziomu, zwróć szczególną uwagę na słabe tematy jeśli są powiązane z pytaniem.
 
-      const response = await window.spark.llm(promptText, 'gpt-4o')
+WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w połowie zdania. Jeśli temat jest obszerny, podaj zwięzłe wyjaśnienie i zaproponuj studentowi rozwinięcie szczegółów.`
+
+      const llmResult = await llm(promptText, 'gpt-4o', { maxTokens: 2048 })
+      let response = llmResult.content
+      
+      if (!llmResult.wasComplete) {
+        response += '\n\n---\n*Chcesz, żebym rozwinął dalej? Wpisz "kontynuuj".*'
+      }
 
       const messageParts = splitLongMessage(response)
       
@@ -342,7 +366,7 @@ Odpowiedz na ostatnie pytanie studenta w sposób profesjonalny i pomocny. Użyj 
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: 'Przepraszam, wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.',
+        content: getErrorMessage(error),
         timestamp: Date.now(),
       }
       setMessages((current) => [...current, errorMessage])

@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight, Check, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useStudentProfile } from '@/hooks/use-student-profile'
 import { safeStorageGet } from '@/lib/storage'
+import { llmSimple, getErrorMessage, LlmError } from '@/lib/llm'
 
 interface ExamQuestion {
   id: number
@@ -123,9 +124,17 @@ Zasady:
 - Pytania powinny pokrywać różne aspekty tematu`
 
       const promptText = `${systemPrompt}`
-      const response = await window.spark.llm(promptText, 'gpt-4o', true)
+      const response = await llmSimple(promptText, 'gpt-4o', { maxTokens: 4096, jsonMode: true })
       
-      const parsed = JSON.parse(response)
+      let parsed: any
+      try {
+        parsed = JSON.parse(response)
+      } catch (parseError) {
+        // Retry once on JSON parse failure (response may have been truncated)
+        console.warn('First JSON parse failed, retrying with higher token limit...')
+        const retryResponse = await llmSimple(promptText, 'gpt-4o', { maxTokens: 6000, jsonMode: true })
+        parsed = JSON.parse(retryResponse)
+      }
       let questions: ExamQuestion[]
       
       if (Array.isArray(parsed)) {
@@ -157,7 +166,7 @@ Zasady:
       toast.success('Egzamin rozpoczęty! Powodzenia!')
     } catch (error) {
       console.error('Error generating exam:', error)
-      toast.error('Nie udało się wygenerować pytań. Spróbuj ponownie.')
+      toast.error(getErrorMessage(error))
       setPhase('start')
     }
   }

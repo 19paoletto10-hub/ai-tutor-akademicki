@@ -13,6 +13,7 @@ import { trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContex
 import { useUploadedMaterials, getKnowledgeBaseSummary } from '@/hooks/use-uploaded-materials'
 import { validateMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
+import { llm, getErrorMessage } from '@/lib/llm'
 import {
   parseCurriculumTopics,
   getCurriculumProgress,
@@ -45,32 +46,34 @@ Prowadzisz studenta SEKWENCYJNIE przez terminologię i pojęcia kursu.
 
 ZASADY SEKWENCYJNEGO NAUCZANIA:
 - Gdy student wybiera temat lub mówi "Kontynuuj", ROZPOCZNIJ od tego tematu.
-- Każdy temat omawiaj według schematu:
+- Każdy temat omawiaj zwięźle według schematu:
   1. DEFINICJA — precyzyjna, akademicka
   2. KONTEKST — gdzie to się stosuje, dlaczego jest ważne
-  3. PRZYKŁAD — konkretny przypadek lub zastosowanie
-  4. POWIĄZANIA — jak łączy się z poprzednimi/następnymi tematami
+  3. PRZYKŁAD — krótki, konkretny przypadek
 - Po omówieniu tematu, ZAWSZE podaj opcje kontynuacji.
+- Jeśli student chce więcej szczegółów lub powiązań, rozwiń w kolejnej wiadomości.
 
 STYL:
 - Akademicki, profesorski, z pozycji autorytetu
 - Zwięzłe zdania, precyzyjny język
+- ZAWSZE kończ myśl — NIGDY nie urywaj odpowiedzi w połowie zdania
 - NIE odpowiadaj na pytania zupełnie spoza zakresu kursu
 - Odpowiadaj po polsku
 
 FORMAT ODPOWIEDZI:
 1) **[TEMAT]: nazwa tematu**
 2) **Definicja**: [precyzyjna definicja]
-3) **Wyjaśnienie**: [kontekst, znaczenie, zastosowanie]
-4) **Przykład**: [przypadek lub praktyczne zastosowanie]
+3) **Wyjaśnienie**: [kontekst, znaczenie, zastosowanie — zwięźle]
+4) **Przykład**: [krótki przypadek lub zastosowanie]
 5) **Źródła**: [jeśli znasz, podaj. Inaczej: "Wiedza ogólna."]
 6) **Opcje**:
-   [A] Kontynuuj do następnego punktu | [B] Wyjaśnij dokładniej
+   [A] Kontynuuj do następnego punktu | [B] Wyjaśnij dokładniej | [C] Podać więcej przykładów?
 
 WAŻNE:
 - Gdy student wybiera [A] — PRZEJDŹ do następnego tematu natychmiast
-- Gdy student wybiera [B] — POGŁĘB aktualny temat (więcej przykładów, szczegółów)
-  Po rozwinięciu ([B]) podaj TYLKO opcję [A] (BEZ [B]) — nie oferuj ponownego rozwinięcia!`
+- Gdy student wybiera [B] — POGŁĘB aktualny temat (więcej szczegółów)
+  Po rozwinięciu ([B]) podaj TYLKO opcję [A] (BEZ [B]) — nie oferuj ponownego rozwinięcia!
+- Gdy student wybiera [C] — podaj dodatkowe przykłady`
 
 function getSystemPrompt(): string {
   const customPrompt = getCustomMentorPrompt()
@@ -213,18 +216,29 @@ export function MentorView() {
     }
 
     try {
-      const conversationHistory = [...messages, userMessage]
+      const PROMPT_HISTORY_LIMIT = 10
+      const recentMessages = [...messages, userMessage]
+        .slice(-PROMPT_HISTORY_LIMIT)
+      
+      const conversationHistory = recentMessages
         .map((msg) => `${msg.role === 'user' ? 'Student' : 'Profesor'}: ${msg.content}`)
         .join('\n\n')
 
       const promptText = `${injectKnowledgeBase(injectCourseContext(getSystemPrompt()), textToSend)}
 
-Historia rozmowy:
+Historia rozmowy (ostatnie ${PROMPT_HISTORY_LIMIT} wiadomości):
 ${conversationHistory}
 
-Odpowiedz na ostatnie pytanie studenta w sposób akademicki i sekwencyjny. Użyj markdown do formatowania odpowiedzi. Pamiętaj o podaniu opcji kontynuacji.`
+Odpowiedz na ostatnie pytanie studenta w sposób akademicki i sekwencyjny. Użyj markdown do formatowania odpowiedzi. Pamiętaj o podaniu opcji kontynuacji.
 
-      const response = await window.spark.llm(promptText, 'gpt-4o')
+WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w połowie zdania. Jeśli temat jest obszerny, podaj zwięzłe wyjaśnienie — student może poprosić o rozwinięcie.`
+
+      const llmResult = await llm(promptText, 'gpt-4o', { maxTokens: 2048 })
+      let response = llmResult.content
+      
+      if (!llmResult.wasComplete) {
+        response += '\n\n---\n*Chcesz, żebym rozwinął dalej? Wybierz [B] lub wpisz "kontynuuj".*'
+      }
 
       const messageParts = splitLongMessage(response)
       
@@ -296,7 +310,7 @@ Odpowiedz na ostatnie pytanie studenta w sposób akademicki i sekwencyjny. Użyj
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: 'Przepraszam, wystąpił błąd podczas generowania odpowiedzi. Spróbuj ponownie.',
+        content: getErrorMessage(error),
         timestamp: Date.now(),
       }
       setMessages((current) => [...current, errorMessage])
