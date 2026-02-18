@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 
 const MAX_MESSAGES = 50
-const MAX_MESSAGE_LENGTH = 8000
+const MAX_MESSAGE_LENGTH = 15000
 
 export function splitLongMessage(content: string, maxLength: number = MAX_MESSAGE_LENGTH): string[] {
   if (content.length <= maxLength) {
@@ -9,71 +9,51 @@ export function splitLongMessage(content: string, maxLength: number = MAX_MESSAG
   }
 
   const parts: string[] = []
-  const paragraphs = content.split('\n\n')
-  let currentPart = ''
-
-  for (const paragraph of paragraphs) {
-    const separator = currentPart ? '\n\n' : ''
-    const combinedLength = currentPart.length + separator.length + paragraph.length
+  let remainingContent = content
+  
+  while (remainingContent.length > 0) {
+    if (remainingContent.length <= maxLength) {
+      parts.push(remainingContent)
+      break
+    }
     
-    if (combinedLength <= maxLength) {
-      currentPart += separator + paragraph
+    let splitIndex = maxLength
+    
+    const paragraphBreak = remainingContent.lastIndexOf('\n\n', maxLength)
+    if (paragraphBreak > maxLength * 0.5) {
+      splitIndex = paragraphBreak + 2
     } else {
-      if (currentPart) {
-        parts.push(currentPart)
-        currentPart = ''
-      }
-      
-      if (paragraph.length > maxLength) {
-        const sentences = paragraph.split(/(?<=[.!?])\s+/)
-        
-        for (const sentence of sentences) {
-          const sentenceSeparator = currentPart ? ' ' : ''
-          
-          if (currentPart.length + sentenceSeparator.length + sentence.length <= maxLength) {
-            currentPart += sentenceSeparator + sentence
+      const sentenceBreak = remainingContent.substring(0, maxLength).match(/[.!?]\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ])/g)
+      if (sentenceBreak) {
+        const lastSentence = remainingContent.substring(0, maxLength).lastIndexOf(sentenceBreak[sentenceBreak.length - 1])
+        if (lastSentence > maxLength * 0.3) {
+          splitIndex = lastSentence + sentenceBreak[sentenceBreak.length - 1].length
+        } else {
+          const newlineBreak = remainingContent.lastIndexOf('\n', maxLength)
+          if (newlineBreak > maxLength * 0.3) {
+            splitIndex = newlineBreak + 1
           } else {
-            if (currentPart) {
-              parts.push(currentPart)
-              currentPart = ''
-            }
-            
-            if (sentence.length > maxLength) {
-              const words = sentence.split(/\s+/)
-              
-              for (const word of words) {
-                const wordSeparator = currentPart ? ' ' : ''
-                
-                if (currentPart.length + wordSeparator.length + word.length <= maxLength) {
-                  currentPart += wordSeparator + word
-                } else {
-                  if (currentPart) {
-                    parts.push(currentPart)
-                  }
-                  
-                  if (word.length > maxLength) {
-                    for (let i = 0; i < word.length; i += maxLength) {
-                      parts.push(word.substring(i, i + maxLength))
-                    }
-                    currentPart = ''
-                  } else {
-                    currentPart = word
-                  }
-                }
-              }
-            } else {
-              currentPart = sentence
+            const spaceBreak = remainingContent.lastIndexOf(' ', maxLength)
+            if (spaceBreak > maxLength * 0.2) {
+              splitIndex = spaceBreak + 1
             }
           }
         }
       } else {
-        currentPart = paragraph
+        const newlineBreak = remainingContent.lastIndexOf('\n', maxLength)
+        if (newlineBreak > maxLength * 0.3) {
+          splitIndex = newlineBreak + 1
+        } else {
+          const spaceBreak = remainingContent.lastIndexOf(' ', maxLength)
+          if (spaceBreak > maxLength * 0.2) {
+            splitIndex = spaceBreak + 1
+          }
+        }
       }
     }
-  }
-
-  if (currentPart) {
-    parts.push(currentPart)
+    
+    parts.push(remainingContent.substring(0, splitIndex).trim())
+    remainingContent = remainingContent.substring(splitIndex).trim()
   }
 
   return parts.length > 0 ? parts : [content]
