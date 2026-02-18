@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { PaperPlaneTilt } from '@phosphor-icons/react'
+import { PaperPlaneTilt, ArrowDown } from '@phosphor-icons/react'
 import { ChatMessage } from '@/components/ChatMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { TutorSidebar } from '@/components/TutorSidebar'
@@ -112,15 +112,25 @@ export function TutorView() {
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [showScrollButton, setShowScrollButton] = useState(false)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior })
+  }, [])
+
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    const { scrollTop, scrollHeight, clientHeight } = container
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+    setShowScrollButton(distanceFromBottom > 150)
+  }, [])
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, scrollToBottom])
 
   useEffect(() => {
     const trimmedMessages = trimMessagesToLimit(messages, MAX_MESSAGES)
@@ -387,10 +397,14 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      <div className="flex-1 lg:w-[70%] flex flex-col min-h-[calc(100vh-12rem)]">
-        <Card className="flex-1 bg-card/60 backdrop-blur-sm border-border/50 shadow-xl flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)]">
+      <div className="flex-1 lg:w-[70%] flex flex-col min-h-0">
+        <Card className="flex-1 bg-card/60 backdrop-blur-sm border-border/50 shadow-xl flex flex-col overflow-hidden min-h-0">
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scroll-smooth"
+          >
             {!messages || messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-4 max-w-md">
@@ -446,7 +460,21 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
             )}
           </div>
 
-          <div className="border-t border-border/50 p-4 md:p-6 bg-muted/20">
+          {showScrollButton && (
+            <div className="relative">
+              <Button
+                onClick={() => scrollToBottom()}
+                size="icon"
+                variant="secondary"
+                className="absolute -top-12 right-4 z-10 rounded-full shadow-lg h-9 w-9 bg-background/90 border border-border/50 hover:bg-background transition-all"
+                aria-label="Przewiń do najnowszej wiadomości"
+              >
+                <ArrowDown size={18} />
+              </Button>
+            </div>
+          )}
+
+          <div className="border-t border-border/50 p-4 md:p-6 bg-muted/20 shrink-0">
             {getKnowledgeBaseSummary(materials) && (
               <div className="mb-3 text-sm text-emerald-400 flex items-center gap-2">
                 <span>📚</span>

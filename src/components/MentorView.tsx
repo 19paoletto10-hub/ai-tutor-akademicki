@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { PaperPlaneTilt } from '@phosphor-icons/react'
+import { PaperPlaneTilt, ArrowDown } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { MentorMessage } from '@/components/MentorMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
@@ -105,7 +105,9 @@ export function MentorView() {
   const [currentTopicName, setCurrentTopicName] = useState<string | null>(null)
   const [curriculumTopics, setCurriculumTopics] = useState<CurriculumTopic[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [showScrollButton, setShowScrollButton] = useState(false)
 
   useEffect(() => {
     const curriculumMarkdown = getCurriculumTopics()
@@ -142,13 +144,21 @@ export function MentorView() {
     return () => clearInterval(interval)
   }, [curriculumTopics])
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior })
+  }, [])
+
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    const { scrollTop, scrollHeight, clientHeight } = container
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+    setShowScrollButton(distanceFromBottom > 150)
+  }, [])
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, scrollToBottom])
 
   useEffect(() => {
     const trimmedMessages = trimMessagesToLimit(messages, MAX_MESSAGES)
@@ -332,16 +342,20 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      <div className="flex-1 lg:w-[70%] flex flex-col min-h-[calc(100vh-12rem)]">
+    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)]">
+      <div className="flex-1 lg:w-[70%] flex flex-col min-h-0">
         {currentTopicName && (
-          <Badge className="mb-3 bg-emerald-500/20 text-emerald-300 border-emerald-500/30 px-4 py-2 w-fit">
+          <Badge className="mb-3 bg-emerald-500/20 text-emerald-300 border-emerald-500/30 px-4 py-2 w-fit shrink-0">
             📖 Aktualny temat: {currentTopicName}
           </Badge>
         )}
         
-        <Card className="flex-1 bg-card/60 backdrop-blur-sm border-border/50 shadow-xl flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">{!messages || messages.length === 0 ? (
+        <Card className="flex-1 bg-card/60 backdrop-blur-sm border-border/50 shadow-xl flex flex-col overflow-hidden min-h-0">
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scroll-smooth"
+          >{!messages || messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-4 max-w-md">
                   <div className="text-5xl">👨‍🏫</div>
@@ -381,7 +395,21 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
             )}
           </div>
 
-          <div className="border-t border-border/50 p-4 md:p-6 bg-muted/20">
+          {showScrollButton && (
+            <div className="relative">
+              <Button
+                onClick={() => scrollToBottom()}
+                size="icon"
+                variant="secondary"
+                className="absolute -top-12 right-4 z-10 rounded-full shadow-lg h-9 w-9 bg-background/90 border border-border/50 hover:bg-background transition-all"
+                aria-label="Przewiń do najnowszej wiadomości"
+              >
+                <ArrowDown size={18} />
+              </Button>
+            </div>
+          )}
+
+          <div className="border-t border-border/50 p-4 md:p-6 bg-muted/20 shrink-0">
             {getKnowledgeBaseSummary(materials) && (
               <div className="mb-3 text-sm text-emerald-400 flex items-center gap-2">
                 <span>📚</span>
