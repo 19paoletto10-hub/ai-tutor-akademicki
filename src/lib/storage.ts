@@ -1,14 +1,6 @@
 import { toast } from 'sonner'
 
 const MAX_MESSAGES = 50
-const MAX_MESSAGE_LENGTH = 4000
-
-export function truncateMessage(content: string): string {
-  if (content.length <= MAX_MESSAGE_LENGTH) {
-    return content
-  }
-  return content.slice(0, MAX_MESSAGE_LENGTH) + '...'
-}
 
 export function trimMessagesToLimit<T>(messages: T[], limit: number = MAX_MESSAGES): T[] {
   if (messages.length <= limit) {
