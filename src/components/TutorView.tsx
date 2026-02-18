@@ -391,8 +391,8 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
         <Card className="flex-1 bg-card/60 backdrop-blur-sm border-border/50 shadow-xl flex flex-col overflow-hidden min-h-0">
           <div
             ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scroll-smooth"
+  }         onScroll={handleScroll}
+
           >
             {!messages || messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
@@ -401,7 +401,7 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
                   <h3 className="text-xl font-semibold">Witaj w trybie Tutor!</h3>
                   <p className="text-muted-foreground">
                     Zadaj pytanie, a ja postaram się odpowiedzieć krok po kroku.
-                    Możesz zapytać o dowolny temat związany z kursem.
+                    Możesz zapyta�� o dowolny temat związany z kursem.
                   </p>
                 </div>
               </div>
