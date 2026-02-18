@@ -7,9 +7,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FloppyDisk, ArrowClockwise } from '@phosphor-icons/react'
+import { FloppyDisk, ArrowClockwise, Sparkle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { FileUploadSection } from '@/components/FileUploadSection'
+import { generateCurriculumFromMaterials } from '@/lib/curriculum-generator'
 
 interface CourseConfig {
   courseName: string
@@ -101,6 +102,7 @@ export function SettingsView() {
   
   const [curriculum, setCurriculum] = useState('')
   const [curriculumCount, setCurriculumCount] = useState(0)
+  const [isGeneratingCurriculum, setIsGeneratingCurriculum] = useState(false)
 
   useEffect(() => {
     const savedCourse = localStorage.getItem('course_config')
@@ -271,6 +273,32 @@ export function SettingsView() {
       toast.error('Błąd zapisu', {
         description: 'Nie udało się zapisać curriculum.',
       })
+    }
+  }
+
+  const handleGenerateCurriculum = async () => {
+    setIsGeneratingCurriculum(true)
+    
+    try {
+      const generatedCurriculum = await generateCurriculumFromMaterials({
+        courseName,
+        courseDescription
+      })
+      
+      setCurriculum(generatedCurriculum)
+      setCurriculumCount(generatedCurriculum.length)
+      
+      localStorage.setItem('curriculum_topics', generatedCurriculum)
+      
+      toast.success('Curriculum wygenerowane!', {
+        description: 'Lista tematów została automatycznie utworzona na podstawie materiałów i opisu kursu.'
+      })
+    } catch (error: any) {
+      toast.error('Błąd generowania', {
+        description: error.message || 'Nie udało się wygenerować curriculum.'
+      })
+    } finally {
+      setIsGeneratingCurriculum(false)
     }
   }
 
@@ -553,13 +581,41 @@ export function SettingsView() {
                 </div>
               </div>
 
-              <Button
-                onClick={handleSaveCurriculum}
-                className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
-              >
-                <FloppyDisk className="mr-2" />
-                💾 Zapisz
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleSaveCurriculum}
+                  className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+                >
+                  <FloppyDisk className="mr-2" />
+                  💾 Zapisz
+                </Button>
+                <Button
+                  onClick={handleGenerateCurriculum}
+                  disabled={isGeneratingCurriculum}
+                  variant="outline"
+                  className="border-accent/30 hover:bg-accent/10 text-accent hover:text-accent"
+                >
+                  {isGeneratingCurriculum ? (
+                    <>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                      ✨ Generowanie...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkle className="mr-2" />
+                      ✨ Generuj automatycznie
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {isGeneratingCurriculum && (
+                <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+                  <p className="text-sm text-accent-foreground">
+                    🤖 AI analizuje materiały kursowe i konfigurację tematu, aby wygenerować strukturę curriculum...
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
