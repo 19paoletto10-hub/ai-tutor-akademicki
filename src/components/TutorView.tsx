@@ -16,6 +16,7 @@ import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
 import { VagueSuggestionCard } from '@/components/VagueSuggestionCard'
 import { llm, llmSimple, getErrorMessage, LlmError } from '@/lib/llm'
 import { toast } from 'sonner'
+import { useKV } from '@github/spark/hooks'
 
 export interface Message {
   id: string
@@ -96,19 +97,12 @@ const WELCOME_MESSAGE: Message = {
   timestamp: Date.now(),
 }
 
-const STORAGE_KEY = 'tutor_chat_history'
 const MAX_MESSAGES = 50
 
 export function TutorView() {
   const { profile, getQuizAverage, addQuizGrade, addWeakTopic } = useStudentProfile()
   const { materials } = useUploadedMaterials()
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const stored = safeStorageGet<Message[]>(STORAGE_KEY, [])
-    if (stored.length > 0) {
-      return trimMessagesToLimit(stored, MAX_MESSAGES)
-    }
-    return [WELCOME_MESSAGE]
-  })
+  const [messages = [WELCOME_MESSAGE], setMessages] = useKV<Message[]>('tutor_chat_history', [WELCOME_MESSAGE])
   const [input, setInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -131,11 +125,6 @@ export function TutorView() {
   useEffect(() => {
     scrollToBottom()
   }, [messages, scrollToBottom])
-
-  useEffect(() => {
-    const trimmedMessages = trimMessagesToLimit(messages, MAX_MESSAGES)
-    safeStorageSet(STORAGE_KEY, trimmedMessages)
-  }, [messages])
 
   const isQuizAnswer = (userMessage: string, previousMessage: Message | undefined): boolean => {
     if (!previousMessage || previousMessage.role !== 'assistant') return false
@@ -227,7 +216,7 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
         timestamp: Date.now(),
         isVagueSuggestion: true,
       }
-      setMessages((current) => [...current, suggestionMessage])
+      setMessages((current = []) => [...current, suggestionMessage])
       return
     }
 
@@ -245,7 +234,7 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
 
     const isAnswerToQuiz = isQuizAnswer(textToSend, previousMessage)
 
-    setMessages((current) => [...current, userMessage])
+    setMessages((current = []) => [...current, userMessage])
     setInput('')
     
     if (!isAnswerToQuiz) {
@@ -263,7 +252,7 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
             message: validationResult.blockMessage || ''
           }
         }
-        setMessages((current) => [...current, blockMessage])
+        setMessages((current = []) => [...current, blockMessage])
         setIsGenerating(false)
         return
       }
@@ -294,7 +283,7 @@ WSKAZÓWKA: [jeśli ocena < 5, co poprawić]`
             quizEvaluation: evaluation,
           }
           
-          setMessages((current) => [...current, evaluationMessage])
+          setMessages((current = []) => [...current, evaluationMessage])
           setIsGenerating(false)
           return
         }
@@ -356,7 +345,7 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
           timestamp: Date.now(),
           isQuizQuestion: response.includes('Mini-sprawdzenie'),
         }
-        setMessages((current) => [...current, assistantMessage])
+        setMessages((current = []) => [...current, assistantMessage])
       } else {
         const newMessages: Message[] = messageParts.map((part, index) => ({
           id: `assistant-${Date.now()}-part-${index}`,
@@ -369,7 +358,7 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
             totalParts: messageParts.length
           }
         }))
-        setMessages((current) => [...current, ...newMessages])
+        setMessages((current = []) => [...current, ...newMessages])
       }
     } catch (error) {
       console.error('Error generating response:', error)
@@ -379,7 +368,7 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
         content: getErrorMessage(error),
         timestamp: Date.now(),
       }
-      setMessages((current) => [...current, errorMessage])
+      setMessages((current = []) => [...current, errorMessage])
     } finally {
       setIsGenerating(false)
     }
