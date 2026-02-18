@@ -304,7 +304,6 @@ export function SettingsView() {
     }
   }
 
-  const handleGenerateCourseInfo = async () => {
     setIsGeneratingCourse(true)
     
     try {
@@ -334,31 +333,31 @@ export function SettingsView() {
   }
 
   return (
+  return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.3 }}low-y-auto"
       className="w-full max-h-[calc(100vh-8rem)] overflow-y-auto"
-    >
+    > <Card className="bg-card/40 border-white/10 backdrop-blur-sm p-8 md:p-10">
       <Card className="bg-card/40 border-white/10 backdrop-blur-sm p-8 md:p-10">
         <div className="space-y-8 pb-8">
-          <div>
+          <div>ext">Ustawienia</h2>
             <h2 className="text-3xl font-bold mb-2 gradient-text">Ustawienia</h2>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground">we
               Skonfiguruj temat kursu, personalizację oraz prompty systemowe
             </p>
           </div>
 
           <div className="space-y-8">
             <FileUploadSection />
-
+lassName="space-y-4 pb-8 border-b border-white/10">
             <div className="space-y-4 pb-8 border-b border-white/10">
-              <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold flex items-center gap-2">
                   🎯 Temat kursu
+                  🎯 Temat kursu
                 </h3>
-                <Button
                   onClick={handleGenerateCourseInfo}
                   disabled={isGeneratingCourse}
                   variant="outline"
@@ -387,6 +386,7 @@ export function SettingsView() {
                 </div>
               )}
 
+              <div className="space-y-2">
               <div className="space-y-2">
                 <Label htmlFor="course-name" className="text-sm font-medium">
                   Nazwa kursu
@@ -449,7 +449,6 @@ export function SettingsView() {
                 <Input
                   id="mentor-name"
                   value={mentorName}
-                  onChange={(e) => handleMentorNameChange(e.target.value)}
                   placeholder="Profesor"
                   maxLength={MAX_MENTOR_NAME_LENGTH}
                   className="bg-background/50 border-white/10 focus:border-primary"
@@ -460,7 +459,7 @@ export function SettingsView() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tutor-language" className="text-sm font-medium">
+              <div className="space-y-2">
                   Język tutora
                 </Label>
                 <Select value={tutorLanguage} onValueChange={(value) => setTutorLanguage(value as 'Polski' | 'English')}>
@@ -475,7 +474,7 @@ export function SettingsView() {
                 <p className="text-xs text-muted-foreground">
                   {tutorLanguage === 'English' 
                     ? 'Tutor będzie odpowiadał po angielsku' 
-                    : 'Tutor będzie odpowiadał po polsku'}
+                    ? 'Tutor będzie odpowiadał po angielsku' 
                 </p>
               </div>
 
@@ -492,7 +491,7 @@ export function SettingsView() {
                   id="dark-mode"
                   checked={darkMode}
                   onCheckedChange={setDarkMode}
-                />
+                  onCheckedChange={setDarkMode}
               </div>
 
               <Button
