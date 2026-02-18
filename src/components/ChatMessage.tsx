@@ -52,7 +52,7 @@ export function ChatMessage({ message, showActionButtons = false, onAction, isGe
             <span className="text-lg">🎓</span>
             <span className="text-xs font-medium text-muted-foreground">Tutor</span>
             {message.partInfo && (
-              <span className="text-xs text-accent/70 ml-auto">
+              <span className="text-xs font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full border border-accent/30 ml-auto">
                 Część {message.partInfo.partNumber}/{message.partInfo.totalParts}
               </span>
             )}
@@ -94,6 +94,15 @@ export function ChatMessage({ message, showActionButtons = false, onAction, isGe
               "
               dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
+          )}
+          
+          {!isUser && message.partInfo && message.partInfo.partNumber < message.partInfo.totalParts && (
+            <div className="mt-4 pt-3 border-t border-accent/20 flex items-center gap-2 text-accent/80">
+              <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              <span className="text-xs font-medium">Kontynuacja poniżej...</span>
+            </div>
           )}
         </div>
 
