@@ -391,8 +391,8 @@ WAŻNE: Odpowiedź MUSI być kompletna — zakończ każdą myśl, nie urywaj w 
         <Card className="flex-1 bg-card/60 backdrop-blur-sm border-border/50 shadow-xl flex flex-col overflow-hidden min-h-0">
           <div
             ref={scrollContainerRef}
-  }         onScroll={handleScroll}
-
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-6 space-y-4"
           >
             {!messages || messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
