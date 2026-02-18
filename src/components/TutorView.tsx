@@ -8,7 +8,7 @@ import { ChatMessage } from '@/components/ChatMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { TutorSidebar } from '@/components/TutorSidebar'
 import { useStudentProfile } from '@/hooks/use-student-profile'
-import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction, injectKnowledgeBase } from '@/lib/storage'
+import { trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomTutorPrompt, getPersonalizationConfig, injectLanguageInstruction, injectKnowledgeBase } from '@/lib/storage'
 import { useUploadedMaterials, getKnowledgeBaseSummary } from '@/hooks/use-uploaded-materials'
 import { QuizEvaluation } from '@/components/QuizEvaluationCard'
 import { validateMessage, isVagueMessage, augmentContextualMessage } from '@/lib/validators'
@@ -107,13 +107,7 @@ export function TutorView() {
 
   useEffect(() => {
     const trimmedMessages = trimMessagesToLimit(messages, MAX_MESSAGES)
-    const truncatedMessages = trimmedMessages.map(msg => ({
-      ...msg,
-      content: truncateMessage(msg.content),
-      quizEvaluation: msg.quizEvaluation,
-      isQuizQuestion: msg.isQuizQuestion,
-    }))
-    safeStorageSet(STORAGE_KEY, truncatedMessages)
+    safeStorageSet(STORAGE_KEY, trimmedMessages)
   }, [messages])
 
   const isQuizAnswer = (userMessage: string, previousMessage: Message | undefined): boolean => {

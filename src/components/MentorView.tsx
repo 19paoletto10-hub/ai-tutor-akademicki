@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { MentorMessage } from '@/components/MentorMessage'
 import { TypingIndicator } from '@/components/TypingIndicator'
 import { MentorSidebar } from '@/components/MentorSidebar'
-import { truncateMessage, trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig, getCurriculumTopics, injectKnowledgeBase } from '@/lib/storage'
+import { trimMessagesToLimit, safeStorageSet, safeStorageGet, injectCourseContext, getCustomMentorPrompt, getPersonalizationConfig, getCurriculumTopics, injectKnowledgeBase } from '@/lib/storage'
 import { useUploadedMaterials, getKnowledgeBaseSummary } from '@/hooks/use-uploaded-materials'
 import { validateMessage } from '@/lib/validators'
 import { ValidationBlockMessage } from '@/components/ValidationBlockMessage'
@@ -145,11 +145,7 @@ export function MentorView() {
 
   useEffect(() => {
     const trimmedMessages = trimMessagesToLimit(messages, MAX_MESSAGES)
-    const truncatedMessages = trimmedMessages.map(msg => ({
-      ...msg,
-      content: truncateMessage(msg.content)
-    }))
-    safeStorageSet(STORAGE_KEY, truncatedMessages)
+    safeStorageSet(STORAGE_KEY, trimmedMessages)
   }, [messages])
 
   useEffect(() => {
